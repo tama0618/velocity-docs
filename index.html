@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velocity - Technical Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Noto+Sans+JP:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0e1218;
+    --bg2: #161c26;
+    --bg3: #1e2738;
+    --accent: #ff4d6a;
+    --accent2: #ff7a8f;
+    --accent-glow: rgba(255,77,106,0.15);
+    --gold: #ffcc33;
+    --text: #f0f0f8;
+    --text2: #a8b0c8;
+    --blue: #5cb8ff;
+    --green: #50e8c0;
+    --purple: #b896ff;
+    --orange: #ffaa44;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(14,18,24,0.88);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 0 40px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  nav .logo {
+    font-weight: 900; font-size: 1.2rem; letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--accent), var(--orange));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  nav ul { list-style: none; display: flex; gap: 28px; }
+  nav a {
+    color: var(--text2); text-decoration: none; font-size: 0.85rem;
+    font-weight: 500; transition: color 0.2s;
+  }
+  nav a:hover { color: var(--text); }
+
+  /* ===== HERO ===== */
+  .hero {
+    position: relative;
+    height: 100vh; min-height: 600px;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: url('img/track_aerial.png') center/cover;
+    filter: brightness(0.3) saturate(1.2);
+    transform: scale(1.05);
+  }
+  .hero::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, var(--bg) 100%);
+  }
+  .hero-content { position: relative; z-index: 2; padding: 0 20px; }
+  .hero h1 {
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900;
+    letter-spacing: 6px;
+    margin-bottom: 24px;
+    background: linear-gradient(135deg, #fff 20%, var(--accent) 60%, var(--orange) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 80px rgba(255,77,106,0.3);
+  }
+  .hero .subtitle {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--text2);
+    max-width: 720px;
+    margin: 0 auto 40px;
+    line-height: 2;
+  }
+  .hero .tags { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .hero .tag {
+    background: rgba(255,77,106,0.12);
+    border: 1px solid rgba(255,77,106,0.25);
+    color: var(--accent2);
+    padding: 7px 20px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ===== SECTIONS ===== */
+  section { padding: 100px 40px; max-width: 1200px; margin: 0 auto; }
+
+  .section-header { text-align: center; margin-bottom: 64px; }
+  .section-header .label {
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+  }
+  .section-header h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 800; margin-bottom: 16px;
+  }
+  .section-header p { color: var(--text2); max-width: 650px; margin: 0 auto; }
+
+  /* ===== FEATURE GRID ===== */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: var(--bg2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 36px;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,77,106,0.3);
+    box-shadow: 0 12px 40px rgba(255,77,106,0.08);
+  }
+  .feature-card .icon {
+    width: 50px; height: 50px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 20px;
+  }
+  .feature-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
+  .feature-card p { color: var(--text2); font-size: 0.92rem; }
+
+  .icon-red { background: rgba(255,77,106,0.15); }
+  .icon-blue { background: rgba(92,184,255,0.15); }
+  .icon-green { background: rgba(80,232,192,0.15); }
+  .icon-purple { background: rgba(184,150,255,0.15); }
+  .icon-gold { background: rgba(255,204,51,0.15); }
+  .icon-orange { background: rgba(255,170,68,0.15); }
+
+  /* ===== DETAIL BLOCK ===== */
+  .detail-block {
+    background: var(--bg2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 48px;
+    margin-bottom: 40px;
+  }
+  .detail-block h3 {
+    font-size: 1.5rem; font-weight: 800;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .detail-block h3 .badge {
+    font-size: 0.7rem; padding: 3px 10px; border-radius: 100px;
+    font-weight: 700; letter-spacing: 1px;
+  }
+  .badge-red { background: var(--accent); color: #fff; }
+  .badge-blue { background: var(--blue); color: #0e1218; }
+  .badge-green { background: var(--green); color: #0e1218; }
+  .badge-purple { background: var(--purple); color: #0e1218; }
+  .badge-orange { background: var(--orange); color: #0e1218; }
+
+  .detail-block .desc { color: var(--text2); margin-bottom: 28px; font-size: 0.95rem; }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .spec-item {
+    background: var(--bg3);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .spec-item h4 {
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--accent2); margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .spec-item p, .spec-item ul { color: var(--text2); font-size: 0.88rem; }
+  .spec-item ul { padding-left: 18px; }
+  .spec-item li { margin-bottom: 4px; }
+
+  .param-table {
+    width: 100%; border-collapse: collapse;
+    margin-top: 20px; font-size: 0.88rem;
+  }
+  .param-table th, .param-table td {
+    padding: 10px 16px; text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .param-table th {
+    color: var(--text2); font-weight: 600; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .param-table td:first-child { color: var(--text); font-weight: 500; }
+  .param-table td:last-child { color: var(--text2); font-family: 'Consolas', monospace; }
+
+  /* ===== IMAGE SECTIONS ===== */
+  .img-showcase {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 16px; margin: 40px 0;
+  }
+  .img-showcase img {
+    width: 100%; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .img-full {
+    margin: 40px 0; border-radius: 16px;
+    overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
+  }
+  .img-full img { width: 100%; display: block; }
+
+  /* Diagram images */
+  .diagram-img {
+    display: block; margin: 24px auto;
+    max-width: 560px; width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(24,28,38,0.8);
+  }
+  .diagram-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px; margin: 24px 0;
+  }
+  .diagram-row img {
+    width: 100%; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(24,28,38,0.8);
+  }
+
+  /* ===== CONTROLS TABLE ===== */
+  .controls-table {
+    width: 100%; border-collapse: collapse;
+    border-radius: 12px; overflow: hidden;
+  }
+  .controls-table th {
+    background: var(--bg3); padding: 14px 20px;
+    font-weight: 700; font-size: 0.9rem; text-align: center;
+    border-bottom: 2px solid var(--accent);
+  }
+  .controls-table td {
+    padding: 12px 20px; text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 0.9rem;
+  }
+  .controls-table tr:nth-child(even) { background: rgba(255,255,255,0.025); }
+  .controls-table td:first-child { font-weight: 600; color: var(--text); text-align: left; }
+
+  /* ===== FLOW DIAGRAM ===== */
+  .flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap; margin: 24px 0;
+  }
+  .flow-step {
+    background: var(--bg3);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .flow-arrow { color: var(--accent); font-size: 1.2rem; }
+
+  /* ===== CODE & FORMULA ===== */
+  .code-block {
+    background: #0d1420;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 16px 20px; margin: 12px 0;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.82rem; line-height: 1.6; color: #c9d1d9;
+    overflow-x: auto; white-space: pre;
+  }
+  .code-block .kw { color: #ff7b72; }
+  .code-block .fn { color: #d2a8ff; }
+  .code-block .num { color: #79c0ff; }
+  .code-block .cm { color: #8b949e; }
+  .code-block .str { color: #a5d6ff; }
+
+  .formula-box {
+    background: linear-gradient(135deg, rgba(255,77,106,0.07), rgba(92,184,255,0.07));
+    border: 1px solid rgba(255,77,106,0.18);
+    border-radius: 10px;
+    padding: 20px 24px; margin: 16px 0;
+    font-size: 1.05rem; text-align: center;
+    font-family: 'Consolas', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== HIGHLIGHT CALLOUT ===== */
+  .callout {
+    background: linear-gradient(135deg, var(--accent-glow), rgba(92,184,255,0.06));
+    border-left: 4px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    padding: 20px 28px; margin: 24px 0;
+    font-size: 0.92rem; color: var(--text2);
+  }
+  .callout strong { color: var(--text); }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center; padding: 60px 40px;
+    color: var(--text2); font-size: 0.85rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    nav ul { display: none; }
+    section { padding: 60px 20px; }
+    .detail-block { padding: 28px; }
+    .img-showcase { grid-template-columns: 1fr; }
+    .diagram-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">VELOCITY</div>
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#player">Player</a></li>
+    <li><a href="#ai-recording">AI: Recording</a></li>
+    <li><a href="#ai-autodrive">AI: AutoDrive</a></li>
+    <li><a href="#systems">Systems</a></li>
+    <li><a href="#controls">Controls</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1>VELOCITY</h1>
+    <p class="subtitle">
+      実車データに基づくシミュレーション物理、プレイヤーの走行記録を再現するAI、ウェイポイント追従で自律走行するAI。<br>
+      ABS/TCS/ESC搭載、17台同時走行。本格レーシング体験をUnityで。
+    </p>
+    <div class="tags">
+      <span class="tag">Simulation Physics</span>
+      <span class="tag">17 Cars on Track</span>
+      <span class="tag">Recording AI</span>
+      <span class="tag">AutoDrive AI</span>
+      <span class="tag">ABS / TCS / ESC</span>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-header">
+    <div class="label">About</div>
+    <h2>ゲーム概要</h2>
+    <p>Unityで構築した本格レーシングシミュレーション。リアルな車両物理と2種類のAIシステムで、毎回異なるレース展開を実現。</p>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="icon icon-red">&#9881;</div>
+      <h3>シミュレーション物理</h3>
+      <p>RPMベースのエンジンモデル、5速MT/AT、タイヤ摩擦カーブ、空力ダウンフォース。実車に近い挙動を再現。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-blue">&#128678;</div>
+      <h3>安全制御システム</h3>
+      <p>ABS（アンチロック）、TCS（トラクションコントロール）、ESC（横滑り防止）。各システムのON/OFF切替可能。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-green">&#129302;</div>
+      <h3>レコーディングAI</h3>
+      <p>プレイヤーの走行データを20Hzで記録・再生。順位に応じた速度ブースト、車線変更、スピン回避で本物のレースを演出。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-purple">&#129504;</div>
+      <h3>ウェイポイントAI</h3>
+      <p>Catmull-Romスプライン補間によるレーシングライン最適化。速度感応ルックアヘッド、障害物レイキャスト回避。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-gold">&#127942;</div>
+      <h3>レース管理</h3>
+      <p>3秒カウントダウン、リアルタイム順位表示、ラップタイム計測。17台のフルグリッドレース。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-orange">&#127918;</div>
+      <h3>入力サポート</h3>
+      <p>キーボード＆ゲームパッド完全対応。アナログトリガーによる繊細なスロットル/ブレーキ操作。</p>
+    </div>
+  </div>
+
+  <div class="img-showcase">
+    <img src="img/gameplay_chase.png" alt="Chase cam gameplay">
+    <img src="img/racing_action.png" alt="Racing action">
+  </div>
+</section>
+
+<!-- PLAYER CAR -->
+<section id="player">
+  <div class="section-header">
+    <div class="label">Player Car</div>
+    <h2>プレイヤー車両の物理モデル</h2>
+    <p>localCarcontroller.cs - 約2,000行のコードで構成される本格シミュレーション</p>
+  </div>
+
+  <!-- Engine & Transmission -->
+  <div class="detail-block">
+    <h3>&#128295; エンジン＆トランスミッション <span class="badge badge-red">CORE</span></h3>
+    <p class="desc">RPM（回転数）ベースのエンジンモデル。トルクカーブ、ギア比、ファイナルドライブまで実車に準拠した計算。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> AnimationCurveで定義したトルクカーブは5つのキーポイントで構成。低回転域ではトルクが立ち上がり、中回転でピーク、高回転で自然に落ち込む実車特性を再現。プレイヤーはパワーバンドを意識したシフト操作が求められます。
+    </div>
+
+    <img src="img/torque_curve.png" alt="Engine Torque Curve" class="diagram-img">
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>トルクカーブ (AnimationCurve)</h4>
+        <p>5点のキーフレームで定義。RPM正規化値(0-1)に対するトルク倍率:</p>
+        <ul>
+          <li>0% (0 RPM) &rarr; 倍率 30%</li>
+          <li>35% (2,450 RPM) &rarr; 倍率 80%</li>
+          <li>55% (3,850 RPM) &rarr; 倍率 100% (ピーク)</li>
+          <li>80% (5,600 RPM) &rarr; 倍率 95%</li>
+          <li>100% (7,000 RPM) &rarr; 倍率 70%</li>
+        </ul>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          driveTorque = maxTorque &times; curve(rpm/maxRPM)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&times; gearRatio &times; finalDrive &times; throttle<br>
+          wheelTorque = driveTorque / wheelRadius
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>5速ギアボックス</h4>
+        <ul>
+          <li>ギア比: 3.5 / 2.3 / 1.7 / 1.3 / 1.0</li>
+          <li>ファイナルドライブ: 3.8</li>
+          <li>速度域: 65 / 100 / 135 / 176 / 230 km/h</li>
+          <li>シフトクールダウン: 0.3秒</li>
+        </ul>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          rpm = wheelRPM &times; gearRatio &times; finalDrive<br>
+          rpm = Clamp(rpm, idleRPM, maxRPM)<br>
+          <span style="color:var(--text2);">// wheelRPM = speed / (2&pi; &times; radius) &times; 60</span>
+        </div>
+      </div>
+    </div>
+
+    <img src="img/gear_diagram.png" alt="Gear Speed Ranges" class="diagram-img">
+
+    <div class="spec-grid" style="margin-top:20px;">
+      <div class="spec-item">
+        <h4>AT/MT切替</h4>
+        <p>ワンボタンでオートマ/マニュアル切替。ATモードはRPMに基づく自動変速:</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// シフトアップ判定</span><br>
+          rpm &gt; 6500 AND speed &gt; gearLimit[gear] &times; 0.9<br>
+          <span style="color:var(--text2);">// シフトダウン判定</span><br>
+          rpm &lt; 3000 AND gear &gt; 1
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>エンジンブレーキ &amp; シンクロ</h4>
+        <p>スロットルOFF時、最大トルクの1.5%がエンジンブレーキとして作用。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          engineBrake = maxTorque &times; 0.015 &times; gearRatio<br>
+          <span style="color:var(--text2);">// ギアチェンジ時</span><br>
+          syncResistance = 800 N&middot;m for 0.12秒
+        </div>
+      </div>
+    </div>
+
+    <table class="param-table">
+      <tr><th>パラメータ</th><th>値</th></tr>
+      <tr><td>最大RPM</td><td>7,000</td></tr>
+      <tr><td>アイドルRPM</td><td>900</td></tr>
+      <tr><td>最大トルク</td><td>320 N&middot;m</td></tr>
+      <tr><td>最大ブレーキトルク</td><td>3,000 N&middot;m</td></tr>
+      <tr><td>前後ブレーキ配分</td><td>65% : 35%</td></tr>
+      <tr><td>ホイール半径</td><td>0.33 m</td></tr>
+    </table>
+  </div>
+
+  <!-- Tire Model -->
+  <div class="detail-block">
+    <h3>&#128722; タイヤ摩擦モデル <span class="badge badge-blue">PHYSICS</span></h3>
+    <p class="desc">WheelColliderのFrictionCurveを詳細設定。前輪と後輪で異なる特性を持たせ、実車のようなアンダー/オーバーステア特性を再現。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> 前輪は横グリップを高めに設定しレスポンスの良い初期旋回を実現。後輪はstiffnessを1.25倍に設定することで、限界域では後輪が先に滑り出すリアルなオーバーステア特性を再現。この前後差がドライビングの「手応え」を生みます。
+    </div>
+
+    <img src="img/friction_curves_player.png" alt="Player Tire Friction Curves" class="diagram-img">
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>前輪フリクション</h4>
+        <ul>
+          <li>前方: extremumSlip=0.14, value=1.15</li>
+          <li>前方: asymptoteSlip=0.35, value=0.95</li>
+          <li>横方: extremumSlip=0.22, value=1.45</li>
+          <li>横方: asymptoteSlip=0.55, value=1.30</li>
+          <li>横方stiffness: 1.0</li>
+        </ul>
+      </div>
+      <div class="spec-item">
+        <h4>後輪フリクション</h4>
+        <ul>
+          <li>前方: 前輪と同一カーブ</li>
+          <li>横方: 前輪と同一カーブ</li>
+          <li>横方stiffness: <strong>1.25</strong> (後輪を硬めに設定)</li>
+        </ul>
+        <p style="margin-top:8px; font-size:0.85rem;">後輪の横stiffnessを25%増すことで、高荷重時に後輪が安定し、低荷重時（ブレーキング等）に自然なオーバーステアを発生。</p>
+      </div>
+      <div class="spec-item">
+        <h4>サスペンション</h4>
+        <ul>
+          <li>ストローク: 0.22 m</li>
+          <li>スプリング: 42,000 N/m</li>
+          <li>ダンパー: 10,000 N&middot;s/m</li>
+          <li>ターゲットポジション: 0.5 (中間)</li>
+        </ul>
+      </div>
+      <div class="spec-item">
+        <h4>重心 &amp; 空力</h4>
+        <ul>
+          <li>重心オフセット: (0, -0.45, 0.05)</li>
+          <li>ダウンフォース係数: 1.8</li>
+        </ul>
+        <div class="formula-box" style="font-size:0.85rem;">
+          downforce = coeff &times; velocity.sqrMagnitude<br>
+          <span style="color:var(--text2);">// 速度の二乗に比例 &rarr; 高速ほどグリップ増加</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stability Systems -->
+  <div class="detail-block">
+    <h3>&#128737; 安全制御システム <span class="badge badge-green">ASSIST</span></h3>
+    <p class="desc">3つの独立した車両安定化システム。各システムは個別にON/OFF可能。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> ESCは実車同様「理想ヨーレート」と「実際のヨーレート」の差分を監視。ホイールベースと速度から物理的に正しい理想値を計算し、オーバーステア/アンダーステアそれぞれに異なるブレーキ制御を適用。OFFにすればドリフト走行も可能です。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ABS（アンチロックブレーキ）</h4>
+        <p>スリップ閾値 0.06 を超えるとブレーキ圧を15Hzでパルス制御。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          slip = (wheelSpeed - groundSpeed) / max(groundSpeed)<br>
+          if |slip| &gt; 0.06:<br>
+          &nbsp; brake = 0  <span style="color:var(--text2);">// パルスOFF</span><br>
+          <span style="color:var(--text2);">// 15Hz周期でON/OFF切替</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>TCS（トラクションコントロール）</h4>
+        <p>駆動輪のスリップが 0.12 を超えるとモータートルクを低減。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          if driveSlip &gt; 0.12:<br>
+          &nbsp; motorTorque *= 0.3<br>
+          <span style="color:var(--text2);">// ステアリング角で閾値を動的拡大</span><br>
+          threshold += |steerAngle| &times; 0.02
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>ESC（横滑り防止）</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          idealYaw = steerAngle &times; speed / wheelBase<br>
+          error = actualYaw - idealYaw<br>
+          deadzone = 0.2 rad/s<br><br>
+          <span style="color:var(--text2);">// オーバーステア: 外側前輪にブレーキ</span><br>
+          <span style="color:var(--text2);">// アンダーステア: 内側後輪にブレーキ</span><br>
+          correction = maxBrake &times; 0.30 &times; |error|
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>アンチロールバー</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          antiRoll = (travelL - travelR) &times; force<br>
+          Front: force = 5,500 N&middot;m/rad<br>
+          Rear: force = 3,500 N&middot;m/rad
+        </div>
+        <p style="margin-top:8px; color:var(--text2); font-size:0.85rem;">左右のサスペンション伸縮差からロール対抗力を算出。コーナリング時の車体傾斜を抑制。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steering & Ghost -->
+  <div class="detail-block">
+    <h3>&#127919; ステアリング＆ゴーストモード</h3>
+    <p class="desc">速度感応式ステアリングとスピン時の安全システム。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> ステアリング角度は低速で広く、高速で狭くなる速度感応式。さらに高速域ではスムージングを6倍に強化し、誤操作による急激な挙動変化を防止。パッシブヨーダンピングで実車のセルフアライニングトルクを模擬しています。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>速度感応ステアリング</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          maxAngle = Lerp(32&deg;, 14&deg;, speed / 160)<br><br>
+          <span style="color:var(--text2);">// 高速スムージング</span><br>
+          if speed &gt; 80km/h:<br>
+          &nbsp; smoothing &times;= 6.0<br><br>
+          <span style="color:var(--text2);">// ヨーダンピング</span><br>
+          dampingTorque = -yawRate &times; dampCoeff
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>ゴーストモード</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 発動: ヨーレート超過 0.3秒</span><br>
+          |yawRate| &gt; threshold for 0.3s<br><br>
+          alpha = 0.3 (70%透過)<br>
+          IgnoreCollision = true<br>
+          最低持続: 2.5秒<br><br>
+          <span style="color:var(--text2);">// 解除: !spinning AND fwdSpeed&gt;3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RECORDING AI -->
+<section id="ai-recording">
+  <div class="section-header">
+    <div class="label">AI Type 1</div>
+    <h2>レコーディングAI</h2>
+    <p>RecordingCPUController.cs (~2,700行) - プレイヤーの走行データを基盤に、リアルタイム補正で自律走行するAI</p>
+  </div>
+
+  <div class="img-showcase">
+    <img src="img/editor_cars1.png" alt="AI cars on track">
+    <img src="img/editor_cars2.png" alt="AI cars S-curve">
+  </div>
+
+  <!-- Data Pipeline -->
+  <div class="detail-block">
+    <h3>&#128190; データパイプライン <span class="badge badge-red">RECORDING</span></h3>
+    <p class="desc">LapRecorderで記録した走行データ（20Hz = 0.05秒間隔）を基盤に走行。位置、回転、速度、ステア角、トルク値を忠実に再現しつつ、リアルタイムで状況判断を上乗せ。</p>
+
+    <div class="flow">
+      <div class="flow-step">走行データ記録 (20Hz)</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">JSON保存</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">AI読み込み</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">リアルタイム補正</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">レース走行</div>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>記録データ構造 (LapDataPoint)</h4>
+        <ul>
+          <li>位置: posX, posY, posZ (float)</li>
+          <li>回転: Quaternion (x, y, z, w)</li>
+          <li>速度: speed (magnitude) + velocity (x,y,z)</li>
+          <li>ステアリング角 (float)</li>
+          <li>モータートルク &amp; ブレーキトルク (float)</li>
+          <li>時間オフセット (float)</li>
+        </ul>
+      </div>
+      <div class="spec-item">
+        <h4>基本パラメータ</h4>
+        <ul>
+          <li>速度倍率: <code>speedMultiplier = 1.05</code></li>
+          <li>速度ノイズ: <code>speedNoise = 0.02</code> (&plusmn;2%)</li>
+          <li>ステアリングノイズ: <code>0.005</code> (Perlin)</li>
+          <li>最大ステアリング角: <code>30&deg;</code></li>
+          <li>ブレーキトルク: <code>3000 N&middot;m</code></li>
+          <li>ダウンフォース係数: <code>1.8</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diagram-row">
+      <img src="img/friction_curves.png" alt="AI Tire Friction Curves">
+      <img src="img/gear_diagram.png" alt="Gear Speed Ranges &amp; Torque">
+    </div>
+
+    <table class="param-table">
+      <tr><th>ギア</th><th>速度上限 (km/h)</th><th>トルク (N&middot;m)</th></tr>
+      <tr><td>1速</td><td>65</td><td>4,200</td></tr>
+      <tr><td>2速</td><td>100</td><td>2,800</td></tr>
+      <tr><td>3速</td><td>135</td><td>2,100</td></tr>
+      <tr><td>4速</td><td>176</td><td>1,600</td></tr>
+      <tr><td>5速</td><td>230</td><td>1,300</td></tr>
+    </table>
+  </div>
+
+  <!-- Look-Ahead -->
+  <div class="detail-block">
+    <h3>&#128065; ルックアヘッド（先読み）システム <span class="badge badge-blue">LOOK-AHEAD</span></h3>
+    <p class="desc">速度・コース逸脱度・カーブ曲率の3要素でルックアヘッド距離を動的に決定。</p>
+
+    <img src="img/lookahead_diagram.png" alt="Dynamic Look-Ahead System" class="diagram-img">
+
+    <div class="formula-box">
+      lookAheadSec = Lerp(0.3, 0.4, speedKmh / 180)<br>
+      &darr; コース逸脱時<br>
+      lookAheadSec &times;= Clamp01(1 - (deviation - 1.5) / 8) + 0.25<br>
+      &darr; オフトラック時<br>
+      lookAheadSec &times;= 0.4<br>
+      &darr; ポイント数に変換<br>
+      lookAheadPts = Max(3, Round(lookAheadSec / 0.05))
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>カーブ曲率検出アルゴリズム</h4>
+        <p>ルックアヘッド範囲内を2ポイントおきにサンプリングし、隣接セグメント間の角度変化を計測。</p>
+        <div class="formula-box" style="font-size:0.9rem; text-align:left;">
+          maxAngleChange &gt; 20&deg; のとき:<br>
+          curveFactor = Lerp(1.0, 0.5, Clamp01((maxAngle - 20) / 40))<br>
+          lookAheadPts = Max(3, Round(lookAheadPts &times; curveFactor))
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem; margin-top:8px;">
+          20&deg;で100% &rarr; 40&deg;で75% &rarr; 60&deg;以上で50%まで短縮。S字コーナーやシケインの事前検知に使用。
+        </p>
+      </div>
+      <div class="spec-item">
+        <h4>逸脱時の挙動変化</h4>
+        <ul>
+          <li>deviation &gt; 1.5m: ルックアヘッド短縮（ライン復帰優先）</li>
+          <li>isOffTrack: ルックアヘッド60%カット（0.4倍）</li>
+          <li>deviation &gt; 4m: 速度ペナルティ発動</li>
+          <li>deviation &gt; 30m: テレポートリカバリー</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steering Algorithm -->
+  <div class="detail-block">
+    <h3>&#128736; ステアリングアルゴリズム <span class="badge badge-blue">STEERING</span></h3>
+    <p class="desc">角度正規化 &rarr; 感度ブースト &rarr; ノイズ注入 &rarr; ハイブリッドスムージングの4段パイプライン。</p>
+
+    <img src="img/steering_hybrid.png" alt="Hybrid Steering Smoothing" class="diagram-img">
+
+    <div class="spec-item" style="margin-bottom:20px;">
+      <h4>Step 1: 角度正規化</h4>
+      <div class="formula-box">
+        angleToTarget = SignedAngle(forward, toTarget, up)<br>
+        sens = Lerp(1.5, 1.6, speedRatio)<br>
+        normalized = Clamp(angleToTarget / <strong>45</strong> &times; sens, -1, 1)
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">45&deg;で&plusmn;1.0に到達する設計。90&deg;除算だとフルロックに達しづらいため、45&deg;基準を採用。</p>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>Step 2: 感度ブースト</h4>
+        <p>コース逸脱度に応じて感度を最大3倍まで引き上げ。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          deviation &gt; 1.5m:<br>
+          &nbsp; sens &times;= Lerp(1, 3, Clamp01((dev-1.5)/5))<br>
+          isOffTrack:<br>
+          &nbsp; sens &times;= 1.8
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>Step 3: Perlinノイズ注入</h4>
+        <p>AIの走行を機械的にしないための微小なステアリング揺らぎ。オフトラック時は無効化。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          noise = (PerlinNoise(time&times;2, offset) &times; 2 - 1)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&times; 0.005<br>
+          normalized += noise
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:20px;">
+      <h4>Step 4: ハイブリッドスムージング</h4>
+      <p>Lerp（指数減衰型）とMoveTowards（定速型）を毎フレーム並行計算し、目標値に近い方を採用。小修正はLerpが有利、大角度修正はMoveTowardsが有利。</p>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        smoothing = 12<br>
+        <span style="color:var(--text2);">// 逸脱時: &times;3, オフトラック: &times;2.5, S字切返し: &times;2</span><br><br>
+        lerped = Lerp(current, target, dt &times; smoothing)<br>
+        moved = MoveTowards(current, target, dt &times; smoothing &times; 0.5)<br><br>
+        <strong>current = |target - moved| &lt; |target - lerped| ? moved : lerped</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Braking -->
+  <div class="detail-block">
+    <h3>&#128721; ブレーキング制御 <span class="badge badge-red">BRAKING</span></h3>
+    <p class="desc">先読みベースの予測ブレーキ + ステアリング連動減速 + コーナーブースト低減の3層制御。</p>
+
+    <div class="spec-item" style="margin-bottom:20px;">
+      <h4>予測ブレーキアルゴリズム</h4>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        <span style="color:var(--text2);">// 先読みポイント数（速度依存）</span><br>
+        brakeLookPts = Round(Lerp(20, 50, speedRatio))<br>
+        <span style="color:var(--text2);">// レーススタート時は+25ポイント延長</span><br><br>
+        <span style="color:var(--text2);">// 将来の最低速度を検索</span><br>
+        lowestFutureSpeed = Min(points[i].speed &times; 1.05) for i in range<br><br>
+        <span style="color:var(--text2);">// ブレーキ閾値判定</span><br>
+        if lowestFuture &lt; targetSpeed &times; <strong>0.88</strong>:<br>
+        &nbsp;&nbsp;targetSpeed = Lerp(lowestFuture, targetSpeed, <strong>0.25</strong>)
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem; margin-top:8px;">
+        レーススタート時（最初の10秒）は閾値0.92、ブレンド率0.2に変更し、より早くブレーキを開始。
+      </p>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ステアリング連動減速</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          if |steering| &gt; 0.5:<br>
+          &nbsp; slowdown = Lerp(1.0, 0.9,<br>
+          &nbsp;&nbsp;&nbsp; Clamp01((|steer|-0.5)/0.4))<br>
+          &nbsp; targetSpeed &times;= slowdown
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">ステアリング0.5以上で最大10%減速。</p>
+      </div>
+      <div class="spec-item">
+        <h4>コーナー前ブースト低減</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          futureDropRatio = lowestFuture / baseSpeed<br><br>
+          if dropRatio &lt; 0.9:<br>
+          &nbsp; reduce = InverseLerp(0.9, 0.5, drop)<br>
+          &nbsp; speedBoost = Lerp(boost, 1.0, reduce)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">コーナー手前で速度が10%以上落ちる場合、順位ブーストを段階的に解除。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speed Control -->
+  <div class="detail-block">
+    <h3>&#9889; 速度制御パイプライン</h3>
+    <p class="desc">複数の補正係数を順番に乗算して最終目標速度を決定。</p>
+
+    <div class="flow">
+      <div class="flow-step">記録速度 &times; 1.05</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">順位ブースト</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">予測ブレーキ</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">ステア減速</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">逸脱ペナルティ</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">渋滞減速</div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">ノイズ</div>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>逸脱ペナルティ</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          if deviation &gt; 4m:<br>
+          &nbsp; factor = Clamp01(1-(dev-4)/20)<br>
+          &nbsp; targetSpeed &times;= Max(factor, 0.4)<br>
+          <span style="color:var(--text2);">// 4m逸脱で減速開始、24mで最低40%</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>渋滞減速</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          wallSqueeze: &times;0.8 (壁に挟まれ)<br>
+          tailgate: &times;0.75 (前車に接近)<br>
+          最低保証: &times;0.7 (70%)
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>スタートグリッド減速</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 最初の7秒間（Lap 0のみ）</span><br>
+          carSeed = (noiseOffset &times; 7.3) % 1<br>
+          slowFactor = Lerp(0.75, 1.0, seed)<br>
+          blend = Clamp01(raceTime / 7)<br>
+          speed &times;= Lerp(slowFactor, 1.0, blend)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">車ごとに固有のシード値で75-100%の速度抑制。7秒かけて徐々に解除し、1コーナーの密集を回避。</p>
+      </div>
+      <div class="spec-item">
+        <h4>アクセル/ブレーキ出力</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          diff = targetKmh - currentKmh<br><br>
+          diff &gt; 3: accel = Clamp01(diff/40+0.3)<br>
+          diff &lt; -5: brake = true<br>
+          else: accel = Lerp(0.1, 0.5, (diff+5)/8)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lane Change -->
+  <div class="detail-block">
+    <h3>&#128663; 車線変更 &amp; 回避システム <span class="badge badge-purple">TACTICS</span></h3>
+    <p class="desc">5つのレーン候補をスコアリングし、最適な走行ラインをリアルタイムで選択。壁レイキャストで安全範囲を制限。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>5レーン候補</h4>
+        <ul>
+          <li><strong>CENTER</strong>: offset = 0</li>
+          <li><strong>FULL RIGHT</strong>: offset = +3.5m</li>
+          <li><strong>FULL LEFT</strong>: offset = -3.5m</li>
+          <li><strong>HALF RIGHT</strong>: offset = +1.75m</li>
+          <li><strong>HALF LEFT</strong>: offset = -1.75m</li>
+        </ul>
+        <p style="color:var(--text2); font-size:0.85rem;">各候補は壁レイキャスト（現在地＋20pt先＋40pt先）で安全範囲にクランプ。検知範囲: 前方15m。</p>
+      </div>
+      <div class="spec-item">
+        <h4>スコアリング公式</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          score = minSeparation &times; <strong>3.0</strong><br>
+          &nbsp;&nbsp; + (1 - |cand - current| / range) &times; <strong>1.5</strong><br>
+          &nbsp;&nbsp; + (1 - |cand| / maxOffset) &times; <strong>0.8</strong><br>
+          &nbsp;&nbsp; + sameSideBonus &times; <strong>3.0</strong><br>
+          &nbsp;&nbsp; + oppositeSideBonus &times; <strong>2.5</strong>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">
+          <strong>他車距離 (x3)</strong>が最重要。次にレーン維持安定性(x1.5)、理想ライン近接度(x0.8)、同一方向ボーナス(x3)。
+        </p>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>壁検出 &amp; 壁回避</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          detectDist = Lerp(5, 20, speedKmh/150)<br>
+          <span style="color:var(--text2);">// 前方 + &plusmn;30&deg;の3方向レイキャスト</span><br><br>
+          proximity = 1 - hitDist / detectDist<br>
+          wallBrake = proximity &times; 0.5<br>
+          wallSteer = sign(normal&middot;right) &times; proximity &times; 0.6
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>テールゲート防止</h4>
+        <p>前走車に2-3秒以上接近し続けるとタイマー発動。最大40%の速度低減を段階的に適用。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          wallSqueeze: speed &times;= Lerp(1.0, 0.8, squeeze)<br>
+          tailgate: speed &times;= Lerp(1.0, 0.75, tailgateFactor)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rank Boost -->
+  <div class="detail-block">
+    <h3>&#128200; 順位連動ブーストシステム（ラバーバンド）</h3>
+    <p class="desc">下位のAI車ほど強力なブーストを受け、レースを接戦に保つ。</p>
+
+    <img src="img/rank_boost.png" alt="Rank-Based Rubber Band Boost" class="diagram-img">
+
+    <div class="formula-box">
+      rankBoostFactor = (currentRank - 1) / (totalRacers - 1)<br>
+      <span style="color:var(--text2);">// 1位 = 0.0, 最下位 = 1.0</span><br><br>
+      torqueBoost = Lerp(1.0, <strong>1.35</strong>, factor)<br>
+      gripBoost = Lerp(1.0, <strong>1.20</strong>, factor)<br>
+      speedBoost = Lerp(1.0, <strong>1.15</strong>, factor)
+    </div>
+
+    <table class="param-table">
+      <tr><th>パラメータ</th><th>1位 (factor=0)</th><th>9位/17 (factor=0.5)</th><th>17位 (factor=1)</th></tr>
+      <tr><td>トルクブースト</td><td>&times;1.00</td><td>&times;1.175</td><td>&times;1.35</td></tr>
+      <tr><td>グリップブースト</td><td>&times;1.00</td><td>&times;1.10</td><td>&times;1.20</td></tr>
+      <tr><td>最高速ブースト</td><td>&times;1.00</td><td>&times;1.075</td><td>&times;1.15</td></tr>
+    </table>
+  </div>
+
+  <!-- Ghost & PerfectTrace -->
+  <div class="detail-block">
+    <h3>&#127775; ゴースト &amp; パーフェクトトレース &amp; リカバリー</h3>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ゴーストモード</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 発動条件</span><br>
+          |yawRate| &gt; 30&deg;/s を 0.3秒以上継続<br><br>
+          <span style="color:var(--text2);">// 効果</span><br>
+          alpha = 0.3 (70%透過)<br>
+          Physics.IgnoreCollision = true<br><br>
+          <span style="color:var(--text2);">// 解除条件 (全て満たす)</span><br>
+          ghostTimer &gt; 2.5s<br>
+          AND !isSpinning AND !isReversing<br>
+          AND forwardSpeed &gt; 3 m/s<br>
+          AND !overlapping AND cooldown &gt; 0.5s
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>パーフェクトトレースモード</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 発動: 最下位 AND ライン2m以内</span><br>
+          if isLastPlace AND deviation &lt; 2m:<br>
+          &nbsp; isPerfectTrace = true<br><br>
+          <span style="color:var(--text2);">// 効果: 全補正を無効化</span><br>
+          lateralOffset = 0<br>
+          wallSteerOverride = 0<br>
+          tailgateSlowdown = 0<br><br>
+          <span style="color:var(--text2);">// 専用ステアリング</span><br>
+          normalized = angle / <strong>90</strong> &times; sens<br>
+          smoothing &times;= <strong>1.5</strong>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>スタック検出 &amp; リカバリー</h4>
+        <ul>
+          <li>速度 &lt; 3km/h AND スロットル &gt; 0.3 &rarr; タイマー蓄積</li>
+          <li>1.5秒でリバース発動（1.5秒間）</li>
+          <li>壁プッシュ &gt; 0.8秒でもリバース発動</li>
+          <li>リバース最大3回、以降テレポート</li>
+          <li>転倒 (up.y &lt; 0.3 で1秒): テレポート</li>
+          <li>30m以上逸脱 (2秒): テレポート</li>
+          <li>累計スタック &gt; 8秒: テレポート</li>
+        </ul>
+      </div>
+      <div class="spec-item">
+        <h4>スピン検出 &amp; ヨーダンピング</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          isSpinning = |yawRate| &gt; 30&deg;/s<br><br>
+          <span style="color:var(--text2);">// ヨーダンピングトルク</span><br>
+          if |yawRate| &gt; 15&deg;/s:<br>
+          &nbsp; str = InverseLerp(15, 60, |yaw|)<br>
+          &nbsp; torque = -sign(yaw) &times; str &times; 8000<br>
+          &nbsp; AddTorque(up &times; torque)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tire & Physics -->
+  <div class="detail-block">
+    <h3>&#9881; タイヤ物理 &amp; 動的グリップ</h3>
+    <p class="desc">荷重感度、フリクションサークル、路面検知、ステアリング連動の4層グリップ計算。</p>
+
+    <table class="param-table">
+      <tr><th>WheelCollider</th><th>前方フリクション</th><th>横方フリクション</th></tr>
+      <tr><td>extremumSlip</td><td>0.14</td><td>0.28</td></tr>
+      <tr><td>extremumValue</td><td>1.35</td><td>1.85</td></tr>
+      <tr><td>asymptoteSlip</td><td>0.35</td><td>0.65</td></tr>
+      <tr><td>asymptoteValue</td><td>1.15</td><td>1.55</td></tr>
+      <tr><td>stiffness (前輪)</td><td>1.15</td><td>1.20</td></tr>
+      <tr><td>stiffness (後輪)</td><td>1.15</td><td>1.45</td></tr>
+    </table>
+
+    <div class="spec-grid" style="margin-top:20px;">
+      <div class="spec-item">
+        <h4>動的stiffness計算</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 1. 荷重感度</span><br>
+          loadMult = Clamp(Pow(nominal/current, 0.1), 0.65, 1.35)<br><br>
+          <span style="color:var(--text2);">// 2. フリクションサークル</span><br>
+          fNorm = |fwdSlip| / 0.14<br>
+          sNorm = |sideSlip| / 0.22<br>
+          combined = Sqrt(f&sup2; + s&sup2;)<br>
+          if combined &gt; 1.3: mult = Clamp(1.3/combined, 0.7, 1)<br><br>
+          <span style="color:var(--text2);">// 3. 路面（ダート検出）</span><br>
+          Dirt: fwd &times;= 0.7, side &times;= 0.75<br><br>
+          <span style="color:var(--text2);">// 4. 指数スムージング</span><br>
+          rate = Max(speedMS / 0.5, 14)<br>
+          lf = 1 - Exp(-rate &times; dt)<br>
+          smoothed = Lerp(smoothed, target, lf)<br><br>
+          <span style="color:var(--text2);">// 5. 順位ブースト適用</span><br>
+          final &times;= gripBoost
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>ステアリング連動グリップ調整</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          speedBlend = Clamp01((speedMS-8)/12)<br><br>
+          <span style="color:var(--text2);">// 前輪: ステア中は横グリップ増加</span><br>
+          frontSide &times;= Lerp(1, Lerp(1.35,1.05,sb), |steer|)<br>
+          <span style="color:var(--text2);">// ブレーキ中はさらに増加</span><br>
+          frontSide &times;= 1 + 0.35 &times; brake &times; |steer|<br><br>
+          <span style="color:var(--text2);">// 後輪: 速度域でトレードオフ</span><br>
+          rearSide &times;= Lerp(1, Lerp(1.0,1.4,sb), |steer|)<br>
+          rearFwd &times;= Lerp(1, Lerp(1.4,1.0,sb), |steer|)
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>オフトラック路面検出</h4>
+      <p style="color:var(--text2); font-size:0.88rem;">車体下方5点（中央＋4輪付近）からレイキャスト。タグ "Dirt", "Grass", "Sand", "outcourse" 等を検出。2点以上がオフトラックの場合 isOffTrack = true。</p>
+    </div>
+
+    <div class="spec-item" style="margin-top:12px;">
+      <h4>アンチロールバー &amp; ダウンフォース</h4>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        <span style="color:var(--text2);">// アンチロールバー</span><br>
+        antiRoll = (travelL - travelR) &times; force<br>
+        Front: force = 5500 N, Rear: force = 3500 N<br><br>
+        <span style="color:var(--text2);">// ダウンフォース</span><br>
+        force = -up &times; 1.8 &times; velocity.sqrMagnitude
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTODRIVE AI -->
+<section id="ai-autodrive">
+  <div class="section-header">
+    <div class="label">AI Type 2</div>
+    <h2>ウェイポイントAI (AutoDrive)</h2>
+    <p>AutoDriveController.cs (~2,400行) - Catmull-Romスプラインとレイキャストで自律走行するAI</p>
+  </div>
+
+  <!-- Spline & Racing Line -->
+  <div class="detail-block">
+    <h3>&#128204; レーシングライン生成 <span class="badge badge-purple">SPLINE</span></h3>
+    <p class="desc">ウェイポイントをCatmull-Romスプラインで補間し、曲率ベースのオフセットで理想ラインを計算。Laplacianスムージングで最終形状を整形。</p>
+
+    <div class="spec-item" style="margin-bottom:20px;">
+      <h4>Catmull-Romスプライン公式</h4>
+      <div class="formula-box" style="text-align:left;">
+        P(t) = 0.5 &times; [<br>
+        &nbsp;&nbsp;(2&times;P1) +<br>
+        &nbsp;&nbsp;(-P0 + P2) &times; t +<br>
+        &nbsp;&nbsp;(2P0 - 5P1 + 4P2 - P3) &times; t&sup2; +<br>
+        &nbsp;&nbsp;(-P0 + 3P1 - 3P2 + P3) &times; t&sup3;<br>
+        ]
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">4つの制御点(P0-P3)とパラメータt(0-1)から滑らかな曲線上の点を算出。splineResolution=10で各ウェイポイント間を10分割。</p>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>曲率ベースのオフセット</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          curvature = Cross(dirPrev, dirNext).y<br>
+          strength = Clamp(|curv| &times; 10 &times; 8, 0, 1)<br>
+          offset = sign(curv) &times; strength<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&times; roadWidth &times; 0.4 &times; 0.6
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">曲率が大きいほどコーナー外側にオフセット。道幅の24%まで使用。</p>
+      </div>
+      <div class="spec-item">
+        <h4>3パスLaplacianスムージング</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 3回繰り返し</span><br>
+          for pass in 0..2:<br>
+          &nbsp; smoothed[i] = points[i] &times; 0.5<br>
+          &nbsp;&nbsp; + points[i-1] &times; 0.25<br>
+          &nbsp;&nbsp; + points[i+1] &times; 0.25
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>ルックアヘッド距離</h4>
+      <div class="formula-box" style="font-size:0.9rem;">
+        lookAheadDist = Lerp(8, 40, InverseLerp(20, 150, speedKmh))
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">20km/hで8m先、150km/hで40m先を参照。速度に応じて線形補間。</p>
+    </div>
+  </div>
+
+  <!-- Steering -->
+  <div class="detail-block">
+    <h3>&#128736; ステアリング制御 <span class="badge badge-blue">STEERING</span></h3>
+    <p class="desc">非線形パワーカーブ + 速度依存スムージング + オーバーテイクバイアスの3段階制御。</p>
+
+    <div class="spec-item" style="margin-bottom:20px;">
+      <h4>非線形ステアリングカーブ</h4>
+      <div class="formula-box" style="text-align:left;">
+        normalized = angleToWP / 90<br>
+        curvedValue = Pow(|normalized|, <strong>0.7</strong>)<br>
+        targetSteering = Clamp(sign &times; curvedValue &times; 1.0, -1, 1)
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">指数0.7のパワーカーブで中間域を穏やかに、大角度域をシャープに。90&deg;で&plusmn;1.0に到達。</p>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>速度依存スムージング</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          speedFactor = Lerp(1.5, 0.6,<br>
+          &nbsp;&nbsp;InverseLerp(30, 150, speedKmh))<br>
+          angleDiff = |target - current|<br>
+          smoothFactor = Lerp(1.0, 0.4, angleDiff)<br>
+          lerpSpeed = 5 &times; speedFactor &times; smoothFactor<br><br>
+          current = Lerp(current, target, dt &times; lerpSpeed)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">低速(30km/h)では素早く(1.5倍)、高速(150km/h)では慎重に(0.6倍)。</p>
+      </div>
+      <div class="spec-item">
+        <h4>オーバーテイクバイアス</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          if |angle| &lt; 20&deg;:<br>
+          &nbsp; angleFactor = 1 - (|angle| / 20)<br>
+          &nbsp; current += overtakeBias &times; angleFactor<br><br>
+          <span style="color:var(--text2);">// 回避バイアス公式</span><br>
+          distFactor = InverseLerp(12, 1, aiDist)<br>
+          curveFactor = Lerp(1, 0.3,<br>
+          &nbsp;&nbsp;InverseLerp(15, 40, |angle|))<br>
+          speedUrg = Lerp(1.5, 0.8, speed/50)<br>
+          bias = dir &times; 0.35 &times; distF &times; curveF<br>
+          &nbsp;&nbsp;&nbsp;&times; speedUrg &times; wallDampen
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Speed Control -->
+  <div class="detail-block">
+    <h3>&#128168; 速度制御 &amp; ブレーキング</h3>
+    <p class="desc">物理ベースの最適速度計算 + 運動方程式ブレーキ距離 + 角度別速度制限。</p>
+
+    <div class="spec-item" style="margin-bottom:20px;">
+      <h4>物理ベース最適速度</h4>
+      <div class="formula-box">
+        v<sub>max</sub> = &radic;(&mu; &times; g &times; r) &times; 3.6 &times; safetyMargin<br>
+        <span style="color:var(--text2);">// &mu; = gripFactor(2.2) &times; 0.8 = 1.76</span><br>
+        <span style="color:var(--text2);">// g = 9.81, r = コーナー半径</span>
+      </div>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ブレーキ距離逆算</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 運動方程式: v&sup2; = v0&sup2; + 2ad</span><br>
+          v0_max = &radic;(v_next&sup2; + 2 &times; decel &times; dist)<br><br>
+          <span style="color:var(--text2);">// カーブ角度で減速率を補正</span><br>
+          &gt;60&deg;: effectiveDecel &times;= 0.7<br>
+          &gt;40&deg;: effectiveDecel &times;= 0.85
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>角度別速度制限</h4>
+        <table class="param-table">
+          <tr><th>角度</th><th>速度上限</th></tr>
+          <tr><td>&gt; 90&deg;</td><td>30 km/h</td></tr>
+          <tr><td>&gt; 60&deg;</td><td>45 km/h</td></tr>
+          <tr><td>&gt; 40&deg;</td><td>60 km/h</td></tr>
+          <tr><td>&gt; 10&deg;</td><td>Lerp(100%, 50%)</td></tr>
+        </table>
+      </div>
+      <div class="spec-item">
+        <h4>TTC (衝突予測時間) ブレーキ</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          ttc = distance / closingSpeed<br><br>
+          ttc &lt; 0.5s: フルブレーキ<br>
+          ttc &lt; 1.5s: 強度 = InverseLerp(1.5, 0.5, ttc)<br>
+          ttc &lt; 3.0s: 軽減速
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>スリップストリーム</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 5-20m後方 AND 横2m以内</span><br>
+          targetSpeed &times;= 1.05 (5%ブースト)<br>
+          lingering = 3秒持続
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Obstacle & Recovery -->
+  <div class="detail-block">
+    <h3>&#128678; 障害物回避 &amp; リカバリー <span class="badge badge-green">AVOIDANCE</span></h3>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>レイキャスト構成</h4>
+        <ul>
+          <li><strong>前方検出:</strong> 5方向 (0&deg;, &plusmn;10&deg;, &plusmn;20&deg;), 25m</li>
+          <li><strong>障害物検出:</strong> 5方向 (0&deg;, &plusmn;20&deg;, &plusmn;40&deg;), 4m</li>
+          <li><strong>壁回避:</strong> 横方向, 3m</li>
+          <li><strong>リバース確認:</strong> 前後5方向, 前3.5m/後2.5m</li>
+          <li><strong>路幅計測:</strong> 左右1mステップ, 最大15m</li>
+          <li><strong>地面検出:</strong> 下方5m</li>
+        </ul>
+      </div>
+      <div class="spec-item">
+        <h4>回避方向決定</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          waypointBias = sign(angleToWP) &times; 0.3<br>
+          random = Range(-1, 1) + waypointBias<br><br>
+          if |aiCarRelPos.x| &gt; 0.5:<br>
+          &nbsp; random -= sign(relPos.x) &times; 0.8<br><br>
+          direction = (random &ge; 0) ? +1 : -1
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>スタック検出 &amp; リカバリー</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 条件1: 低速 + スロットル + 障害物</span><br>
+          speed &lt; 3km/h AND accel &gt; 0.3 AND obstacle<br>
+          <span style="color:var(--text2);">// 条件2: ほぼ停止 + スロットル</span><br>
+          speed &lt; 1km/h AND accel &gt; 0.5<br><br>
+          reverseTime = 2.0 + Min(stuckCount&times;0.5, 2.5)<br>
+          累計10秒 &rarr; テレポート
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>動的タイヤグリップ</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 路面検知</span><br>
+          Dirt: fwd &times;= 0.3, side &times;= 0.38<br><br>
+          <span style="color:var(--text2);">// 荷重感度</span><br>
+          loadMult = Pow(nominal/current, 0.1)<br>
+          Clamp(0.65, 1.35)<br><br>
+          <span style="color:var(--text2);">// フリクションサークル</span><br>
+          if combined &gt; 1.3: mult = 1.3/combined
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>順位ブースト (AutoDrive版)</h4>
+      <div class="formula-box" style="font-size:0.9rem;">
+        rankRatio = (currentRank - 1) / (totalRacers - 1)<br>
+        boostMultiplier = 1.0 + (20 / 100) &times; rankRatio<br>
+        <span style="color:var(--text2);">// 1位: &times;1.0, 最下位: &times;1.2 (最大20%ブースト)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RACE SYSTEMS -->
+<section id="systems">
+  <div class="section-header">
+    <div class="label">Systems</div>
+    <h2>レース管理システム</h2>
+    <p>カウントダウン、順位管理、ラップ計測を統合的に制御</p>
+  </div>
+
+  <div class="spec-grid">
+    <div class="detail-block" style="margin-bottom:0">
+      <h3>&#9201; カウントダウン</h3>
+      <p class="desc">RaceCountdown.cs</p>
+      <p style="color:var(--text2); font-size:0.9rem;">
+        画面中央に大文字で 3 &rarr; 2 &rarr; 1 &rarr; GO! を表示。GO!の1秒後にフェードアウト。カウント中は全車両の canMove = false で停止。完了時に EnableMovement() を全車に送信。
+      </p>
+    </div>
+    <div class="detail-block" style="margin-bottom:0">
+      <h3>&#127942; 順位管理</h3>
+      <p class="desc">RacePositionManager.cs</p>
+      <p style="color:var(--text2); font-size:0.9rem;">
+        0.2秒間隔で全車の進行度を計算。進行度 = ラップ数 + (ポイントインデックス / 総ポイント数)。プレイヤーは最寄りポイント検索で位置を推定。順位に応じてAIのブーストファクターを自動更新。
+      </p>
+    </div>
+    <div class="detail-block" style="margin-bottom:0">
+      <h3>&#9202; ラップタイマー</h3>
+      <p class="desc">GoalManager.cs</p>
+      <p style="color:var(--text2); font-size:0.9rem;">
+        トリガーベースのラップ検出（重複防止: 50秒間隔）。初回通過でタイマー開始、2回目以降でラップタイム記録。現在ラップ・前ラップ・ベストラップをTMPで表示。表示形式: MM:SS.CC。
+      </p>
+    </div>
+    <div class="detail-block" style="margin-bottom:0">
+      <h3>&#128190; ラップ記録</h3>
+      <p class="desc">LapRecorder.cs</p>
+      <p style="color:var(--text2); font-size:0.9rem;">
+        0.05秒間隔(20Hz)で車両状態を記録。位置・回転・速度・ステア角・トルク値を保存。ゴール通過で自動分割。JSON形式でDesktop/lap_dataフォルダに出力。最低10ポイント以上で保存。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTROLS -->
+<section id="controls">
+  <div class="section-header">
+    <div class="label">Controls</div>
+    <h2>操作方法</h2>
+    <p>キーボードとゲームパッドの両方に完全対応</p>
+  </div>
+
+  <div class="detail-block">
+    <table class="controls-table">
+      <tr><th>操作</th><th>キーボード</th><th>ゲームパッド</th></tr>
+      <tr><td>ステアリング</td><td>A/D または &larr;/&rarr;</td><td>左スティック 左右</td></tr>
+      <tr><td>アクセル</td><td>W または &uarr;</td><td>RT (右トリガー)</td></tr>
+      <tr><td>ブレーキ</td><td>S / &darr; / Space</td><td>LT (左トリガー)</td></tr>
+      <tr><td>シフトアップ</td><td>V</td><td>B (Xbox) / &#9675; (PS)</td></tr>
+      <tr><td>シフトダウン</td><td>C</td><td>X (Xbox) / &#9633; (PS)</td></tr>
+      <tr><td>AT/MT切替</td><td>M</td><td>Y (Xbox) / &#9651; (PS)</td></tr>
+      <tr><td>リセット</td><td>R</td><td>&mdash;</td></tr>
+      <tr><td>カメラ切替</td><td>&mdash;</td><td>十字キー 上下</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="section-header">
+    <div class="label">Gallery</div>
+    <h2>ギャラリー</h2>
+  </div>
+
+  <div class="img-showcase">
+    <img src="img/track_aerial.png" alt="Track aerial view">
+    <img src="img/gameplay_chase.png" alt="Gameplay chase cam">
+    <img src="img/cockpit_view.png" alt="Cockpit view">
+    <img src="img/racing_action.png" alt="Racing action">
+    <img src="img/pitlane.png" alt="Pit lane area">
+    <img src="img/frontview.png" alt="Front view">
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Velocity &mdash; Built with Unity 2022.3 / Photon Fusion</p>
+  <p style="margin-top:8px; font-size:0.75rem; color:rgba(255,255,255,0.3);">Technical Documentation</p>
+</footer>
+
+</body>
+</html>
