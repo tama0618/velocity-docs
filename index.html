@@ -32,7 +32,6 @@
   #controls       { --s-accent: #d4a017; --s-accent2: #e6b830; --s-glow: rgba(212,160,23,0.08); }
   #ai-ml          { --s-accent: #3949ab; --s-accent2: #5c6bc0; --s-glow: rgba(57,73,171,0.08); }
   #audio          { --s-accent: #00acc1; --s-accent2: #26c6da; --s-glow: rgba(0,172,193,0.08); }
-  #networking     { --s-accent: #5c6bc0; --s-accent2: #7986cb; --s-glow: rgba(92,107,192,0.08); }
 
   /* Inherit section accent into children */
   section[id] {
@@ -544,7 +543,6 @@
     <li><a href="#ai-ml">ML-Agents</a></li>
     <li><a href="#audio">Audio</a></li>
     <li><a href="#systems">Systems</a></li>
-    <li><a href="#networking">Network</a></li>
     <li><a href="#controls">Controls</a></li>
   </ul>
 </nav>
@@ -558,7 +556,7 @@
   <div class="hero-content">
     <h1>VELOCITY</h1>
     <p class="subtitle">
-      実車データに基づくシミュレーション物理、3種類のAIシステム、プロシージャルエンジンサウンド、Photon Fusionマルチプレイ。<br>
+      実車データに基づくシミュレーション物理、3種類のAIシステム、プロシージャルエンジンサウンド。<br>
       ABS/TCS/ESC搭載、17台同時走行。本格レーシング体験をUnityで。
     </p>
     <div class="tags">
@@ -567,7 +565,7 @@
       <a href="#ai-autodrive" class="tag">AutoDrive AI</a>
       <a href="#ai-ml" class="tag">ML-Agents AI</a>
       <a href="#audio" class="tag">Procedural Audio</a>
-      <a href="#networking" class="tag">Photon Fusion</a>
+      <a href="#controls" class="tag">Controls</a>
     </div>
   </div>
 </section>
@@ -2580,95 +2578,6 @@
   <div class="img-break-overlay"></div>
 </div>
 
-<!-- NETWORKING -->
-<section id="networking">
-  <div class="section-header">
-    <div class="label">Networking</div>
-    <h2>マルチプレイヤー (Photon Fusion)</h2>
-    <p>Photon Fusion Shared Modeによるリアルタイムオンライン対戦アーキテクチャ</p>
-  </div>
-
-  <div class="callout">
-    <strong>レースゲーム開発者へ:</strong> Photon Fusionは従来のPUN2と異なり、ネットワーク同期をティックベースで行う。Shared Modeでは各クライアントが自分のオブジェクトの状態権限(State Authority)を持ち、他のオブジェクトの状態はネットワークから受信する。レースゲームでは、各プレイヤーが自車の物理演算を完全に行い、結果だけを同期する方式が最も自然。<br>
-    <strong>参考:</strong> <em>Photon Fusion Documentation</em> - Shared Mode / State Authority pattern
-  </div>
-
-  <div class="detail-block">
-    <h3>&#127760; GameLauncher - セッション管理 <span class="badge badge-blue">NETWORK</span></h3>
-    <p class="desc">GameLauncher.cs - INetworkRunnerCallbacksを実装し、セッション参加からアバタースポーンまでを制御。</p>
-
-    <div class="spec-grid">
-      <div class="spec-item">
-        <h4>接続フロー</h4>
-        <div class="flow">
-          <div class="flow-step">NetworkRunner生成</div>
-          <span class="flow-arrow">&rarr;</span>
-          <div class="flow-step">コールバック登録</div>
-          <span class="flow-arrow">&rarr;</span>
-          <div class="flow-step">StartGame (Shared)</div>
-          <span class="flow-arrow">&rarr;</span>
-          <div class="flow-step">OnPlayerJoined</div>
-          <span class="flow-arrow">&rarr;</span>
-          <div class="flow-step">Avatar Spawn</div>
-        </div>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// 非同期セッション開始</span><br>
-          var result = await networkRunner.StartGame(<br>
-          &nbsp;&nbsp;new StartGameArgs {<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;GameMode = GameMode.Shared<br>
-          &nbsp;&nbsp;});<br><br>
-          <span style="color:var(--text2);">// 自分のプレイヤーが参加した時</span><br>
-          if (player == runner.LocalPlayer) {<br>
-          &nbsp;&nbsp;var spawn = Random.insideUnitCircle &times; 5<br>
-          &nbsp;&nbsp;var pos = new Vector3(spawn.x, 2, spawn.y)<br>
-          &nbsp;&nbsp;var obj = runner.Spawn(prefab, pos, rot)<br>
-          &nbsp;&nbsp;obj.GetComponent&lt;CarController&gt;().isthis = true<br>
-          &nbsp;&nbsp;camera_m.Instance.Cinemachine.target = obj<br>
-          }
-        </div>
-      </div>
-      <div class="spec-item">
-        <h4>設計ポイント</h4>
-        <ul>
-          <li><strong>targetFrameRate = 40:</strong> ネットワーク同期のためフレームレート制限。Fusionのtick rateと整合</li>
-          <li><strong>Shared Mode:</strong> 各クライアントが自車の物理を計算。ホスト不要でP2P的に動作</li>
-          <li><strong>スポーン位置:</strong> 半径5mの円内にランダム配置。衝突を避けるためY=2mに浮かせてスポーン</li>
-          <li><strong>isthis フラグ:</strong> 自分のアバターかどうかをCarControllerに通知。入力処理の有効/無効を制御</li>
-          <li><strong>カメラ接続:</strong> camera_mシングルトンを介して動的にターゲット設定</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="detail-block">
-    <h3>&#128663; CarController - ネットワーク車両 <span class="badge badge-purple">FUSION</span></h3>
-    <p class="desc">CarController.cs (~996行) - localCarcontrollerのネットワーク版。Photon FusionのNetworkBehaviourを継承し、入力/状態の同期を行う。</p>
-
-    <div class="spec-grid">
-      <div class="spec-item">
-        <h4>ローカル vs ネットワーク</h4>
-        <table class="param-table">
-          <tr><th>要素</th><th>localCarcontroller</th><th>CarController</th></tr>
-          <tr><td>継承元</td><td>MonoBehaviour</td><td>NetworkBehaviour</td></tr>
-          <tr><td>物理更新</td><td>FixedUpdate</td><td>FixedUpdateNetwork</td></tr>
-          <tr><td>入力</td><td>直接読み取り</td><td>isthisフラグで判定</td></tr>
-          <tr><td>状態管理</td><td>ローカル変数</td><td>[Networked]属性</td></tr>
-          <tr><td>使用シーン</td><td>オフライン/AI基盤</td><td>オンライン対戦</td></tr>
-        </table>
-      </div>
-      <div class="spec-item">
-        <h4>Shared Modeの利点</h4>
-        <ul>
-          <li>各プレイヤーが自車の物理を完全に計算 → 入力遅延なし</li>
-          <li>状態権限が分散 → ホストボトルネックなし</li>
-          <li>相手車両はネットワークから補間 → 帯域効率が良い</li>
-          <li>オフラインコードの大部分をそのまま流用可能</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- FOOTER -->
 <footer>
   <p>Velocity &mdash; Built with Unity 2022.3</p>
@@ -2756,7 +2665,6 @@ document.addEventListener('DOMContentLoaded', () => {
     'audio':        { accent: '#00acc1', accent2: '#26c6da' },
     'systems':      { accent: '#e67e22', accent2: '#f0993e' },
     'controls':     { accent: '#d4a017', accent2: '#e6b830' },
-    'networking':   { accent: '#5c6bc0', accent2: '#7986cb' },
   };
 
   document.querySelectorAll('.split-img').forEach((el, i) => {
@@ -2817,16 +2725,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
-  }, { threshold: 0.15, rootMargin: '-64px 0px -40% 0px' });
+  }, { threshold: 0, rootMargin: '-64px 0px -50% 0px' });
   sections.forEach(s => navObserver.observe(s));
 
   // === FLOATING PARTICLES ===
   const canvas = document.getElementById('particles');
   const ctx = canvas.getContext('2d');
-  let particleColor = '#e8384f';
+  let particleColor = [232, 56, 79]; // RGB
+  let targetColor  = [232, 56, 79];
   let w, h;
   const particles = [];
   const COUNT = 35;
+
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return [r, g, b];
+  }
+  function lerpColor(a, b, t) {
+    return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+  }
 
   function resize() {
     w = canvas.width = window.innerWidth;
@@ -2842,12 +2759,15 @@ document.addEventListener('DOMContentLoaded', () => {
       r: Math.random() * 3 + 1.5,
       vx: (Math.random() - 0.5) * 0.3,
       vy: -(Math.random() * 0.4 + 0.1),
-      opacity: Math.random() * 0.3 + 0.05,
+      opacity: Math.random() * 0.12 + 0.02,
     });
   }
 
   function drawParticles() {
     ctx.clearRect(0, 0, w, h);
+    // Smooth color lerp toward target
+    particleColor = lerpColor(particleColor, targetColor, 0.035);
+    const rgb = `rgb(${particleColor[0]|0},${particleColor[1]|0},${particleColor[2]|0})`;
     const scrollY = window.scrollY;
     particles.forEach(p => {
       // Map particle y from page-space to screen-space
@@ -2855,7 +2775,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const sy = screenY < 0 ? screenY + h + 40 : screenY;
       ctx.beginPath();
       ctx.arc(p.x, sy, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = particleColor;
+      ctx.fillStyle = rgb;
       ctx.globalAlpha = p.opacity;
       ctx.fill();
 
@@ -2870,15 +2790,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   drawParticles();
 
-  // Update particle color based on section
+  // Update particle color based on section (synced with nav observer threshold)
   const particleObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const c = sectionColors[entry.target.id];
-        if (c) particleColor = c.accent;
+        if (c) targetColor = hexToRgb(c.accent);
       }
     });
-  }, { threshold: 0.3 });
+  }, { threshold: 0, rootMargin: '-64px 0px -50% 0px' });
   sections.forEach(s => particleObserver.observe(s));
 });
 </script>
