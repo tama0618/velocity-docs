@@ -543,6 +543,9 @@
   </ul>
 </nav>
 
+<!-- FLOATING PARTICLES -->
+<canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></canvas>
+
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg"></div>
@@ -1789,6 +1792,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, { threshold: 0.15, rootMargin: '-64px 0px -40% 0px' });
   sections.forEach(s => navObserver.observe(s));
+
+  // === FLOATING PARTICLES ===
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particleColor = '#e8384f';
+  let w, h;
+  const particles = [];
+  const COUNT = 35;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h * 5, // spread across full page height
+      r: Math.random() * 3 + 1.5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -(Math.random() * 0.4 + 0.1),
+      opacity: Math.random() * 0.3 + 0.05,
+    });
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, w, h);
+    const scrollY = window.scrollY;
+    particles.forEach(p => {
+      // Map particle y from page-space to screen-space
+      const screenY = ((p.y - scrollY * 0.15) % (h + 40)) ;
+      const sy = screenY < 0 ? screenY + h + 40 : screenY;
+      ctx.beginPath();
+      ctx.arc(p.x, sy, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = particleColor;
+      ctx.globalAlpha = p.opacity;
+      ctx.fill();
+
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+      if (p.y < -10) p.y += h + 40;
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  // Update particle color based on section
+  const particleObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const c = sectionColors[entry.target.id];
+        if (c) particleColor = c.accent;
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => particleObserver.observe(s));
 });
 </script>
 
