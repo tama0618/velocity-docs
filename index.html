@@ -30,7 +30,6 @@
   #ai-autodrive   { --s-accent: #8854d0; --s-accent2: #a07de0; --s-glow: rgba(136,84,208,0.08); }
   #systems        { --s-accent: #e67e22; --s-accent2: #f0993e; --s-glow: rgba(230,126,34,0.08); }
   #controls       { --s-accent: #d4a017; --s-accent2: #e6b830; --s-glow: rgba(212,160,23,0.08); }
-  #gallery        { --s-accent: #e8384f; --s-accent2: #ff5a6e; --s-glow: rgba(232,56,79,0.08); }
 
   /* Inherit section accent into children */
   section[id] {
@@ -370,6 +369,63 @@
   }
   .callout strong { color: var(--text); }
 
+  /* ===== MARQUEE GALLERY ===== */
+  .marquee-gallery {
+    padding: 80px 0; overflow: hidden;
+    max-width: 100vw; margin: 0 auto;
+  }
+  .marquee-gallery .section-header {
+    max-width: 1200px; margin: 0 auto 48px; padding: 0 40px;
+  }
+  .marquee-row {
+    display: flex; gap: 20px;
+    width: max-content;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  .marquee-row.row-left  { animation-name: marqueeLeft;  animation-duration: 40s; }
+  .marquee-row.row-right { animation-name: marqueeRight; animation-duration: 45s; }
+  .marquee-row:hover { animation-play-state: paused; }
+  @keyframes marqueeLeft  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  @keyframes marqueeRight { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+  .marquee-row .marquee-item {
+    flex-shrink: 0; width: 420px; height: 260px;
+    border-radius: 16px; overflow: hidden; position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .marquee-row .marquee-item img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  }
+  .marquee-row .marquee-item:hover img {
+    transform: scale(1.06);
+  }
+  .marquee-row .marquee-item .marquee-caption {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 20px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    color: #fff; font-size: 0.85rem; font-weight: 600;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .marquee-row .marquee-item:hover .marquee-caption {
+    opacity: 1; transform: translateY(0);
+  }
+  .marquee-row + .marquee-row { margin-top: 20px; }
+
+  /* Video item */
+  .marquee-item video {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+
+  @media (max-width: 768px) {
+    .marquee-row .marquee-item { width: 300px; height: 190px; }
+    .marquee-gallery { padding: 50px 0; }
+    .marquee-gallery .section-header { padding: 0 20px; }
+  }
+
   /* ===== FOOTER ===== */
   footer {
     text-align: center; padding: 60px 40px;
@@ -492,7 +548,6 @@
     <li><a href="#ai-autodrive">AI: AutoDrive</a></li>
     <li><a href="#systems">Systems</a></li>
     <li><a href="#controls">Controls</a></li>
-    <li><a href="#gallery">Gallery</a></li>
   </ul>
 </nav>
 
@@ -1555,22 +1610,47 @@
   </div>
 </section>
 
-<!-- GALLERY -->
-<section id="gallery">
+<!-- MARQUEE GALLERY (between Controls and Footer) -->
+<div class="marquee-gallery" id="gallery">
   <div class="section-header">
     <div class="label">Gallery</div>
     <h2>ギャラリー</h2>
   </div>
 
-  <div class="img-showcase">
-    <img src="img/track_aerial.png" alt="Track aerial view">
-    <img src="img/gameplay_chase.png" alt="Gameplay chase cam">
-    <img src="img/cockpit_view.png" alt="Cockpit view">
-    <img src="img/racing_action.png" alt="Racing action">
-    <img src="img/pitlane.png" alt="Pit lane area">
-    <img src="img/frontview.png" alt="Front view">
+  <!-- Row 1: left scroll -->
+  <div class="marquee-row row-left">
+    <div class="marquee-item"><img src="img/track_aerial.png" alt="Track aerial"><div class="marquee-caption">コース全景</div></div>
+    <div class="marquee-item"><img src="img/gameplay_chase.png" alt="Chase cam"><div class="marquee-caption">チェイスカメラ</div></div>
+    <div class="marquee-item"><img src="img/cockpit_view.png" alt="Cockpit"><div class="marquee-caption">コックピットビュー</div></div>
+    <div class="marquee-item"><img src="img/racing_action.png" alt="Racing"><div class="marquee-caption">レーシングアクション</div></div>
+    <div class="marquee-item"><img src="img/gameplay2.png" alt="Gameplay 2"><div class="marquee-caption">ゲームプレイ</div></div>
+    <div class="marquee-item"><img src="img/editor_cars1.png" alt="AI cars"><div class="marquee-caption">AI車両群</div></div>
+    <!-- duplicate for seamless loop -->
+    <div class="marquee-item"><img src="img/track_aerial.png" alt="Track aerial"><div class="marquee-caption">コース全景</div></div>
+    <div class="marquee-item"><img src="img/gameplay_chase.png" alt="Chase cam"><div class="marquee-caption">チェイスカメラ</div></div>
+    <div class="marquee-item"><img src="img/cockpit_view.png" alt="Cockpit"><div class="marquee-caption">コックピットビュー</div></div>
+    <div class="marquee-item"><img src="img/racing_action.png" alt="Racing"><div class="marquee-caption">レーシングアクション</div></div>
+    <div class="marquee-item"><img src="img/gameplay2.png" alt="Gameplay 2"><div class="marquee-caption">ゲームプレイ</div></div>
+    <div class="marquee-item"><img src="img/editor_cars1.png" alt="AI cars"><div class="marquee-caption">AI車両群</div></div>
   </div>
-</section>
+
+  <!-- Row 2: right scroll -->
+  <div class="marquee-row row-right">
+    <div class="marquee-item"><img src="img/pitlane.png" alt="Pit lane"><div class="marquee-caption">ピットレーン</div></div>
+    <div class="marquee-item"><img src="img/frontview.png" alt="Front view"><div class="marquee-caption">フロントビュー</div></div>
+    <div class="marquee-item"><img src="img/gameplay3.png" alt="Gameplay 3"><div class="marquee-caption">バトルシーン</div></div>
+    <div class="marquee-item"><img src="img/early_build.png" alt="Early build"><div class="marquee-caption">開発初期</div></div>
+    <div class="marquee-item"><img src="img/editor_cars2.png" alt="S-curve"><div class="marquee-caption">S字コーナー</div></div>
+    <div class="marquee-item"><video autoplay muted loop playsinline><source src="img/gameplay.mp4" type="video/mp4"></video><div class="marquee-caption">プレイ映像</div></div>
+    <!-- duplicate for seamless loop -->
+    <div class="marquee-item"><img src="img/pitlane.png" alt="Pit lane"><div class="marquee-caption">ピットレーン</div></div>
+    <div class="marquee-item"><img src="img/frontview.png" alt="Front view"><div class="marquee-caption">フロントビュー</div></div>
+    <div class="marquee-item"><img src="img/gameplay3.png" alt="Gameplay 3"><div class="marquee-caption">バトルシーン</div></div>
+    <div class="marquee-item"><img src="img/early_build.png" alt="Early build"><div class="marquee-caption">開発初期</div></div>
+    <div class="marquee-item"><img src="img/editor_cars2.png" alt="S-curve"><div class="marquee-caption">S字コーナー</div></div>
+    <div class="marquee-item"><video autoplay muted loop playsinline><source src="img/gameplay.mp4" type="video/mp4"></video><div class="marquee-caption">プレイ映像</div></div>
+  </div>
+</div>
 
 <!-- FOOTER -->
 <footer>
@@ -1667,7 +1747,6 @@ document.addEventListener('DOMContentLoaded', () => {
     'ai-autodrive': { accent: '#8854d0', accent2: '#a07de0' },
     'systems':      { accent: '#e67e22', accent2: '#f0993e' },
     'controls':     { accent: '#d4a017', accent2: '#e6b830' },
-    'gallery':      { accent: '#e8384f', accent2: '#ff5a6e' },
   };
   const navLogo = document.querySelector('nav .logo');
   const navLinks = document.querySelectorAll('nav ul a');
