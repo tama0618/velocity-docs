@@ -30,6 +30,9 @@
   #ai-autodrive   { --s-accent: #8854d0; --s-accent2: #a07de0; --s-glow: rgba(136,84,208,0.08); }
   #systems        { --s-accent: #e67e22; --s-accent2: #f0993e; --s-glow: rgba(230,126,34,0.08); }
   #controls       { --s-accent: #d4a017; --s-accent2: #e6b830; --s-glow: rgba(212,160,23,0.08); }
+  #ai-ml          { --s-accent: #3949ab; --s-accent2: #5c6bc0; --s-glow: rgba(57,73,171,0.08); }
+  #audio          { --s-accent: #00acc1; --s-accent2: #26c6da; --s-glow: rgba(0,172,193,0.08); }
+  #networking     { --s-accent: #5c6bc0; --s-accent2: #7986cb; --s-glow: rgba(92,107,192,0.08); }
 
   /* Inherit section accent into children */
   section[id] {
@@ -538,7 +541,10 @@
     <li><a href="#player">Player</a></li>
     <li><a href="#ai-recording">AI: Recording</a></li>
     <li><a href="#ai-autodrive">AI: AutoDrive</a></li>
+    <li><a href="#ai-ml">ML-Agents</a></li>
+    <li><a href="#audio">Audio</a></li>
     <li><a href="#systems">Systems</a></li>
+    <li><a href="#networking">Network</a></li>
     <li><a href="#controls">Controls</a></li>
   </ul>
 </nav>
@@ -552,15 +558,16 @@
   <div class="hero-content">
     <h1>VELOCITY</h1>
     <p class="subtitle">
-      実車データに基づくシミュレーション物理、プレイヤーの走行記録を再現するAI、ウェイポイント追従で自律走行するAI。<br>
+      実車データに基づくシミュレーション物理、3種類のAIシステム、プロシージャルエンジンサウンド、Photon Fusionマルチプレイ。<br>
       ABS/TCS/ESC搭載、17台同時走行。本格レーシング体験をUnityで。
     </p>
     <div class="tags">
       <a href="#player" class="tag">Simulation Physics</a>
-      <a href="#about" class="tag">17 Cars on Track</a>
       <a href="#ai-recording" class="tag">Recording AI</a>
       <a href="#ai-autodrive" class="tag">AutoDrive AI</a>
-      <a href="#player" class="tag">ABS / TCS / ESC</a>
+      <a href="#ai-ml" class="tag">ML-Agents AI</a>
+      <a href="#audio" class="tag">Procedural Audio</a>
+      <a href="#networking" class="tag">Photon Fusion</a>
     </div>
   </div>
 </section>
@@ -570,7 +577,7 @@
   <div class="section-header">
     <div class="label">About</div>
     <h2>ゲーム概要</h2>
-    <p>Unityで構築した本格レーシングシミュレーション。リアルな車両物理と2種類のAIシステムで、毎回異なるレース展開を実現。</p>
+    <p>Unityで構築した本格レーシングシミュレーション。リアルな車両物理と3種類のAIシステム、プロシージャルオーディオ、Photon Fusionオンライン対戦で、毎回異なるレース展開を実現。</p>
   </div>
 
   <div class="features">
@@ -595,14 +602,24 @@
       <p>Catmull-Romスプライン補間によるレーシングライン最適化。速度感応ルックアヘッド、障害物レイキャスト回避。</p>
     </div>
     <div class="feature-card">
-      <div class="icon icon-gold">&#127942;</div>
-      <h3>レース管理</h3>
-      <p>3秒カウントダウン、リアルタイム順位表示、ラップタイム計測。17台のフルグリッドレース。</p>
+      <div class="icon icon-gold">&#129302;</div>
+      <h3>強化学習AI</h3>
+      <p>ML-Agentsによる強化学習AI。40次元観察空間、報酬設計でクリーンな追い抜きとスリップストリーム活用を自律学習。</p>
     </div>
     <div class="feature-card">
-      <div class="icon icon-orange">&#127918;</div>
-      <h3>入力サポート</h3>
-      <p>キーボード＆ゲームパッド完全対応。アナログトリガーによる繊細なスロットル/ブレーキ操作。</p>
+      <div class="icon icon-orange">&#127925;</div>
+      <h3>プロシージャルオーディオ</h3>
+      <p>ウェーブテーブル合成でエンジン音をリアルタイム生成。F20C VTEC切替、EJ257ボクサーランブル、ターボBOV。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-red">&#127760;</div>
+      <h3>オンライン対戦</h3>
+      <p>Photon Fusion Shared Mode。各プレイヤーが自車の物理を計算し、状態を同期。ラグなしの対戦体験。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon icon-blue">&#127942;</div>
+      <h3>レース管理</h3>
+      <p>リフレクション順位管理、ラバーバンドブースト、ラップ記録システム。17台のフルグリッドレース。</p>
     </div>
   </div>
 
@@ -841,6 +858,100 @@
           <span style="color:var(--text2);">// 解除: !spinning AND fwdSpeed&gt;3</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- CarBodyKit System -->
+  <div class="detail-block">
+    <h3>&#128295; CarBodyKit - 車種カスタマイズシステム <span class="badge badge-purple">MODULAR</span></h3>
+    <p class="desc">CarBodyKit.cs - C#リフレクションでlocalCarcontrollerの全パラメータを上書きし、1つの物理コントローラーで複数車種を表現するアーキテクチャ。ボディのビジュアル差し替えとphysics tuningを同時に行う。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> 車種ごとに物理コントローラーを複製するのではなく、1つのコントローラー + 差分パラメータ方式を採用。これにより、新しい車種の追加はScriptableObjectやMonoBehaviourで差分だけ定義すればよく、物理エンジンのバグ修正が全車種に一括反映される利点があります。<br>
+      <strong>参考文献:</strong> <em>"Game Programming Patterns"</em> - Robert Nystrom, Component Pattern / Type Object Pattern
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>アーキテクチャ: Reflection Override</h4>
+        <p>C#の<code>System.Reflection</code>でprivateフィールドを直接書き換え。<code>[DefaultExecutionOrder(10)]</code>でAwake実行順を制御し、localCarcontrollerのStart()より先にパラメータを注入。</p>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 実行順序の制御</span><br>
+          [DefaultExecutionOrder(10)]  <span style="color:var(--text2);">// controller(0)より後</span><br>
+          [RequireComponent(typeof(localCarcontroller))]<br><br>
+          <span style="color:var(--text2);">// Awakeで全パラメータを上書き</span><br>
+          OverrideField("tirePhysicsVersion", 999);<br>
+          <span style="color:var(--text2);">// ↑ controllerのStart()内リセットを回避</span><br><br>
+          <span style="color:var(--text2);">// リフレクションでprivateフィールド書き換え</span><br>
+          var field = typeof(localCarcontroller)<br>
+          &nbsp;&nbsp;.GetField(name, NonPublic | Instance);<br>
+          field.SetValue(controller, value);
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>オーバーライド可能パラメータ</h4>
+        <ul>
+          <li><strong>駆動方式:</strong> FF / FR / AWD</li>
+          <li><strong>エンジン:</strong> トルク値, RPM範囲, トルクカーブ(AnimationCurve), エンジンブレーキ係数</li>
+          <li><strong>変速機:</strong> ギア比配列(可変段数), ファイナルドライブ, シフトRPM閾値</li>
+          <li><strong>タイヤ:</strong> 前方/横方フリクション4値, 荷重感度, 前後グリップ倍率</li>
+          <li><strong>ステアリング:</strong> 低速/高速最大角, 遷移速度, スムージング</li>
+          <li><strong>ブレーキ:</strong> 最大トルク, 前後配分</li>
+          <li><strong>空力:</strong> ダウンフォース係数, 空気抵抗係数</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>ビジュアルボディスワップ</h4>
+      <p style="color:var(--text2); font-size:0.88rem;">InspectorでoriginalBodyとreplacementBodyを指定するだけで、Awake時にSetActive切替。WheelColliderは共通のため、ホイールベースとトレッド幅が近い車種間で共用可能。</p>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>追加物理処理 (FixedUpdate)</h4>
+      <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+        <span style="color:var(--text2);">// 停車ブレーキ (controller出力に加算)</span><br>
+        hSpeed &lt; 0.3 AND throttle &lt; 0.05:<br>
+        &nbsp; brakeTorque += maxBrake &times; 0.8<br><br>
+        <span style="color:var(--text2);">// 低速時の角速度ダンピング</span><br>
+        hSpeed &lt; 3: angularVelocity &times;= Lerp(0.9, 1.0, hSpeed/3)<br><br>
+        <span style="color:var(--text2);">// 停車時の垂直バウンス抑制</span><br>
+        hSpeed &lt; 1: velocity.y &times;= 0.85
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>WRX STI プリセット (EJ257 2.5L ターボ AWD):</strong><br>
+      CarBodyKitのデフォルト値はスバル WRX STI (EJ257) を再現。
+    </div>
+
+    <table class="param-table">
+      <tr><th>パラメータ</th><th>S2000 (デフォルト)</th><th>WRX STI (CarBodyKit)</th></tr>
+      <tr><td>駆動方式</td><td>FR</td><td>AWD</td></tr>
+      <tr><td>最大トルク</td><td>320 N&middot;m</td><td>407 N&middot;m</td></tr>
+      <tr><td>トルクカーブ特性</td><td>NA高回転型 (5点)</td><td>ターボ中間型 (7点)</td></tr>
+      <tr><td>ギア数</td><td>5速</td><td>6速</td></tr>
+      <tr><td>ファイナルドライブ</td><td>3.8</td><td>3.9</td></tr>
+      <tr><td>最大ブレーキ</td><td>3,000 N&middot;m</td><td>3,500 N&middot;m</td></tr>
+      <tr><td>ダウンフォース</td><td>1.8</td><td>2.2</td></tr>
+      <tr><td>空気抵抗</td><td>なし</td><td>0.38</td></tr>
+      <tr><td>横方extremumSlip</td><td>0.22</td><td>0.20</td></tr>
+      <tr><td>WC Substeps</td><td>デフォルト</td><td>12/15 (安定性強化)</td></tr>
+    </table>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>EJ257 ターボトルクカーブ (7点)</h4>
+      <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+        <span style="color:var(--text2);">// spool → boost → fat mid-range → falloff</span><br>
+        { 0.00, 0.35 } <span style="color:var(--text2);">// アイドル: ターボ未効</span><br>
+        { 0.20, 0.55 } <span style="color:var(--text2);">// スプール開始</span><br>
+        { 0.40, 0.95 } <span style="color:var(--text2);">// ブースト到達</span><br>
+        { 0.55, 1.00 } <span style="color:var(--text2);">// ピークトルク</span><br>
+        { 0.75, 0.95 } <span style="color:var(--text2);">// 中回転プラトー</span><br>
+        { 0.90, 0.85 } <span style="color:var(--text2);">// フォールオフ開始</span><br>
+        { 1.00, 0.70 } <span style="color:var(--text2);">// レブリミット付近</span>
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">NAエンジン(S2000)が5500RPM付近にピークを持つ鋭いカーブなのに対し、ターボ(STI)は3850-5250RPMの広い範囲でフラットなトルクを発生。これがドライビングフィールの違いを生む。</p>
     </div>
   </div>
 </section>
@@ -1331,9 +1442,9 @@
   </div>
 </section>
 
-<!-- Full-bleed: Racing action -->
+<!-- Full-bleed: Early build -->
 <div class="img-break">
-  <img src="img/racing_action.png" alt="Racing action" class="parallax-img">
+  <img src="img/early_build.png" alt="Early development build" class="parallax-img">
   <div class="img-break-tint"></div>
   <div class="img-break-overlay"></div>
 </div>
@@ -1559,6 +1670,397 @@
   </div>
 </section>
 
+<!-- Full-bleed: Racing action -->
+<div class="img-break">
+  <img src="img/racing_action.png" alt="Racing action" class="parallax-img">
+  <div class="img-break-tint"></div>
+  <div class="img-break-overlay"></div>
+</div>
+
+<!-- ML-AGENTS AI -->
+<section id="ai-ml">
+  <div class="section-header">
+    <div class="label">AI Type 3</div>
+    <h2>強化学習AI (ML-Agents)</h2>
+    <p>RacingAgent.cs - Unity ML-Agentsによる強化学習ベースのレーシングAI。観察→行動→報酬のサイクルで、速くてクリーンな走りを自律的に学習。</p>
+  </div>
+
+  <div class="callout">
+    <strong>レースゲーム開発者へ:</strong> 強化学習AIは「ルールを書かずに走り方を学ばせる」アプローチ。ウェイポイントAIが「こう走れ」と指示するのに対し、ML-AgentsAIは「速く走ればご褒美、ぶつかったら罰」のルールだけ与え、走り方自体はニューラルネットワークが発見する。結果、人間が想定しなかったレーシングラインや追い抜きテクニックが出現することも。<br>
+    <strong>参考文献:</strong> <em>"Unity ML-Agents Toolkit"</em> - Unity Technologies, GitHub: ml-agents/docs
+  </div>
+
+  <!-- Observation Space -->
+  <div class="detail-block">
+    <h3>&#128065; 観察空間 (Observations) <span class="badge badge-blue">INPUT</span></h3>
+    <p class="desc">エージェントが毎フレーム「見る」情報。合計40次元のベクトル観察。</p>
+
+    <table class="param-table">
+      <tr><th>カテゴリ</th><th>次元数</th><th>内容</th></tr>
+      <tr><td>自車状態</td><td>6</td><td>速度(/50), ヨーレート(/10), ステア, スロットル, 横速度(/20), 前方速度(/50)</td></tr>
+      <tr><td>タイヤ状態</td><td>4</td><td>4輪のスリップ量 (前方+横方の合計, 0-1正規化)</td></tr>
+      <tr><td>コース情報</td><td>7</td><td>次WP方向(3D), WP距離(/50), カーブ角(/90), コーナー距離(/100), ライン偏差</td></tr>
+      <tr><td>壁距離</td><td>9</td><td>-80°〜+80°の9方向レイキャスト, 30m, 正規化(/30)</td></tr>
+      <tr><td>相手車両</td><td>12</td><td>近接3台: 相対X(/10), 相対Z(/30), 接近中?, 速度(/50)</td></tr>
+      <tr><td>レース状況</td><td>2</td><td>現在順位(/10), ラップ進捗(0-1)</td></tr>
+    </table>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>正規化の設計意図</h4>
+      <p style="color:var(--text2); font-size:0.88rem;">
+        全観察値を概ね[-1, 1]の範囲に正規化。ニューラルネットワークは入力スケールに敏感なため、物理単位(m/s, rad/s)をそのまま使うと学習が不安定に。速度は50m/s(180km/h)、距離は30-50m、角度は90°を基準値として選択。
+      </p>
+    </div>
+  </div>
+
+  <!-- Action Space -->
+  <div class="detail-block">
+    <h3>&#127919; 行動空間 (Actions) <span class="badge badge-green">OUTPUT</span></h3>
+    <p class="desc">連続値2次元: ステアリング[-1, 1] + スロットル/ブレーキ[-1, 1]。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ステアリング制御</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 速度依存の最大ステア角</span><br>
+          speedFactor = Clamp01(speedKmh / 120)<br>
+          maxSteer = Lerp(32&deg;, 6&deg;, speedFactor)<br>
+          <span style="color:var(--text2);">// ↑ 高速では6°まで制限 (スピン防止)</span><br><br>
+          <span style="color:var(--text2);">// スムージング (高速ほど遅い)</span><br>
+          steerSpeed = Lerp(8, 2, speedFactor)<br>
+          smoothed = Lerp(current, target, dt &times; steerSpeed)<br><br>
+          <span style="color:var(--text2);">// 障害物回避を加算</span><br>
+          final = Clamp(steering + avoidCorrection, -1, 1)
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>速度制御</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// throttle > 0: 加速</span><br>
+          torque = gearTorques[gear] &times; throttle<br>
+          &nbsp;&nbsp;&times; Lerp(1, accelFactor, gear/maxGear)<br>
+          if speedKmh > gearSpeedLimit: torque = 0<br><br>
+          <span style="color:var(--text2);">// throttle < 0: ブレーキ</span><br>
+          brake = |throttle| &times; 3000 N&middot;m<br><br>
+          <span style="color:var(--text2);">// 駆動方式: FR (後輪駆動)</span><br>
+          wheelRL.motorTorque = torque<br>
+          wheelRR.motorTorque = torque
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reward System -->
+  <div class="detail-block">
+    <h3>&#127942; 報酬設計 (Reward Shaping) <span class="badge badge-red">REWARD</span></h3>
+    <p class="desc">報酬設計はRL-AIの品質を決める最重要要素。「速さ」と「マナー」のバランスを取る多層報酬。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> 報酬設計のコツは「やってほしいことに正の報酬、やってほしくないことに負の報酬」だが、報酬の大きさのバランスが重要。チェックポイント(+1.0)よりオーバーテイク(+5.0)を大きくすると、追い抜きに積極的なAIになる。逆にペナルティが大きすぎると消極的になる。<br>
+      <strong>参考:</strong> <em>"Reward Shaping in RL"</em> - Andrew Ng, ICML 1999
+    </div>
+
+    <table class="param-table">
+      <tr><th>報酬</th><th>値</th><th>条件</th></tr>
+      <tr><td style="color:var(--green);">前進速度</td><td>+0.001 &times; v</td><td>毎フレーム、前方速度に比例</td></tr>
+      <tr><td style="color:var(--green);">チェックポイント通過</td><td>+1.0</td><td>ウェイポイント15m以内</td></tr>
+      <tr><td style="color:var(--green);">ラップ完走</td><td>+10.0</td><td>全ウェイポイント通過</td></tr>
+      <tr><td style="color:var(--green);">クリーン追い抜き</td><td>+5.0</td><td>接触なしで順位上昇</td></tr>
+      <tr><td style="color:var(--green);">接触あり追い抜き</td><td>+2.0</td><td>接触ありで順位上昇</td></tr>
+      <tr><td style="color:var(--green);">コーナー追い抜きボーナス</td><td>+4.0</td><td>カーブ中のクリーン追い抜き</td></tr>
+      <tr><td style="color:var(--green);">スリップストリーム活用</td><td>+0.05</td><td>前車の後方5-25m、横2m以内</td></tr>
+      <tr><td style="color:var(--accent);">コース逸脱</td><td>-0.5</td><td>OffTrack/Grassタグ検知</td></tr>
+      <tr><td style="color:var(--accent);">逆走</td><td>-2.0</td><td>WP方向との内積 &lt; -0.5</td></tr>
+      <tr><td style="color:var(--accent);">軽接触</td><td>-0.5</td><td>低速での車両接触</td></tr>
+      <tr><td style="color:var(--accent);">サイドアタック</td><td>-2.0</td><td>横方向からの車両接触</td></tr>
+      <tr><td style="color:var(--accent);">追突</td><td>-3.0</td><td>前方車両への追突</td></tr>
+      <tr><td style="color:var(--accent);">順位を失う</td><td>-3.0</td><td>他車に抜かれた</td></tr>
+      <tr><td style="color:var(--accent);">蛇行ブロック</td><td>-2.0</td><td>ストレートで2回以上ライン変更</td></tr>
+      <tr><td style="color:var(--accent);">タイムアウト</td><td>-1.0</td><td>120秒以内に完走できず</td></tr>
+    </table>
+  </div>
+
+  <!-- Avoidance & Physics -->
+  <div class="detail-block">
+    <h3>&#128736; 障害物回避 &amp; 車両物理</h3>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>回避ステアリング (レイキャストベース)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 前方障害物: 25m, 強度0.7</span><br>
+          <span style="color:var(--text2);">// 左右壁: 15m</span><br><br>
+          avoidCorrection = CalculateAvoidanceSteering()<br>
+          if |correction| > 0.01:<br>
+          &nbsp; finalSteer = Clamp(steer + correction, -1, 1)
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>車両物理 (locaCarcontroller v26準拠)</h4>
+        <ul>
+          <li>WheelColliderフリクション: プレイヤーと完全同一</li>
+          <li>サスペンション: 42,000N/m, 10,000Ns/m</li>
+          <li>後輪stiffness: 1.25倍</li>
+          <li>重心: (0, -0.45, 0.05)</li>
+          <li>ダウンフォース: 1.8 &times; v&sup2;</li>
+          <li>アンチロールバー: F=5500, R=3500</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>エピソード管理</h4>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        <span style="color:var(--text2);">// OnEpisodeBegin: 完全リセット</span><br>
+        position = spawnPosition<br>
+        velocity = angularVelocity = Vector3.zero<br>
+        checkpoint = gear = 0, steering = throttle = 0<br><br>
+        <span style="color:var(--text2);">// 終了条件</span><br>
+        episodeTimer > 120s: EndEpisode() <span style="color:var(--text2);">// タイムアウト</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Full-bleed: Movie_012 gameplay -->
+<div class="img-break">
+  <video autoplay muted loop playsinline>
+    <source src="img/Movie_012.mp4" type="video/mp4">
+  </video>
+  <div class="img-break-tint"></div>
+  <div class="img-break-overlay"></div>
+</div>
+
+<!-- PROCEDURAL AUDIO -->
+<section id="audio">
+  <div class="section-header">
+    <div class="label">Audio Engine</div>
+    <h2>プロシージャルエンジンサウンド</h2>
+    <p>録音素材に頼らず、物理モデルからエンジン音をリアルタイム合成。車種ごとに異なるサウンドキャラクターを数式で定義。</p>
+  </div>
+
+  <div class="callout">
+    <strong>レースゲーム開発者へ:</strong> エンジン音を録音サンプルで実装すると、RPM変化に伴うピッチシフトでアーティファクトが生じやすく、VTEC切替のような非連続な変化を表現しにくい。ウェーブテーブル合成なら、基本波形を数式で生成し、RPMに応じてピッチを変えるだけで自然な音が得られる。<br>
+    <strong>参考文献:</strong> <em>"Physically Informed Sonic Modeling"</em> - Perry Cook, Princeton University
+  </div>
+
+  <!-- F20C Engine Audio -->
+  <div class="detail-block">
+    <h3>&#127925; F20C エンジンサウンド (Honda S2000) <span class="badge badge-red">SYNTHESIS</span></h3>
+    <p class="desc">F20CEngineAudio.cs - ウェーブテーブル合成によるVTEC切替対応の2カム・エンジンサウンド。排気パルスの物理モデルに基づき、ローカム/ハイカムの2波形をクロスフェード。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ウェーブテーブル合成アーキテクチャ</h4>
+        <p>AudioClip.Createで1周期分の波形を生成し、AudioSourceでループ再生。ピッチ操作でRPM連動。メリット: OnAudioFilterRead不要でCPU負荷が極めて低い。</p>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 基準周波数 75Hz (1気筒あたり)</span><br>
+          periodSamples = sampleRate / 75<br>
+          numPeriods = sampleRate / periodSamples<br>
+          <span style="color:var(--text2);">// 偶数に丸め (ループポイント整合)</span><br>
+          totalSamples = periodSamples &times; numPeriods
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>排気パルスモデル</h4>
+        <p>オシロスコープの点火パルスデータに基づく指数減衰パルス。周期の約80%が静寂→高回転でもパルス間ギャップ維持→4気筒感。</p>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 1. 排気パルス (点火直後の圧力波)</span><br>
+          pulse = exp(-phase &times; pulseDecay)<br><br>
+          <span style="color:var(--text2);">// 2. ブロック共振 (減衰振動)</span><br>
+          rumble = sin(phase &times; 2&pi; &times; freqMult)<br>
+          &nbsp;&nbsp;&times; exp(-phase &times; decay &times; 0.7) &times; amount<br><br>
+          <span style="color:var(--text2);">// 3. サブベース (クランク回転周波数)</span><br>
+          sub = sin(halfPhase &times; 2&pi;) &times; subAmount<br><br>
+          <span style="color:var(--text2);">// 4. 燃焼ノイズ (パルスエンベロープ連動)</span><br>
+          noise = LPF(white_noise, cutoff)<br>
+          &nbsp;&nbsp;&times; exp(-phase &times; decay &times; 0.4) &times; amount
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>サチュレーション関数</h4>
+        <p>真空管アンプを模した3次有理関数。倍音を付加しながらピークを制限。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          Saturate(x) = x &times; (27 + x&sup2;) / (27 + 9x&sup2;)<br><br>
+          <span style="color:var(--text2);">// |x| > 3 のとき &plusmn;1にクリップ</span><br>
+          <span style="color:var(--text2);">// driveGain=2.8で適度な歪み</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>DC除去 &amp; 正規化</h4>
+        <p>指数パルスは正バイアスが強いため、平均除去後に0.85ピークに正規化。</p>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          mean = &Sigma;samples / N<br>
+          samples[i] -= mean<br>
+          samples[i] &times;= 0.85 / maxAbs
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>ローカム vs ハイカム波形比較</h4>
+    </div>
+    <table class="param-table">
+      <tr><th>パラメータ</th><th>ローカム (低回転)</th><th>ハイカム (VTEC後)</th></tr>
+      <tr><td>パルス減衰率</td><td>12 (~20%デューティ)</td><td>18 (~13%デューティ)</td></tr>
+      <tr><td>共振周波数倍率</td><td>3倍音 (暗い音色)</td><td>4倍音 (明るい「叫び」)</td></tr>
+      <tr><td>共振量</td><td>0.25</td><td>0.35</td></tr>
+      <tr><td>LPFカットオフ</td><td>1,500 Hz</td><td>2,500 Hz</td></tr>
+      <tr><td>サブベース量</td><td>0.45 (フル)</td><td>0.1125 (25%)</td></tr>
+      <tr><td>ノイズカットオフ</td><td>400 Hz</td><td>800 Hz</td></tr>
+      <tr><td>ノイズ量</td><td>0.08</td><td>0.12</td></tr>
+      <tr><td>歪みゲイン</td><td>2.8</td><td>3.08 (&times;1.1)</td></tr>
+    </table>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>VTECクロスフェード</h4>
+      <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+        <span style="color:var(--text2);">// normalizedSpeed &asymp; currentRPM / maxRPM</span><br>
+        <span style="color:var(--text2);">// vtecSpeedThreshold=0.6 &asymp; 5800RPM/9000RPM</span><br><br>
+        if normalizedSpeed &ge; 0.6:<br>
+        &nbsp; vtecTarget = Clamp01((speed - 0.6) / 0.08)<br>
+        &nbsp; <span style="color:var(--text2);">// 8%の幅で0→1に急変（バッと切り替わる感じ）</span><br><br>
+        vtecBlend = Lerp(vtecBlend, target, dt &times; 20)<br>
+        <span style="color:var(--text2);">// 追従速度20 = 0.05秒で完了</span><br><br>
+        <span style="color:var(--text2);">// 音量クロスフェード</span><br>
+        lowCamVol = rpmVolume &times; Lerp(1, 0.15, vtecBlend)<br>
+        highCamVol = rpmVolume &times; vtecBlend<br>
+        <span style="color:var(--text2);">// lowCamRetain=0.15で完全には消さない</span>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>レブリミッター (燃料カット方式)</h4>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        <span style="color:var(--text2);">// normalizedSpeed &ge; 0.99 で発動</span><br>
+        timer += dt &times; 12Hz &times; 2&pi;<br>
+        sinVal = sin(timer)<br>
+        volumeMod = sinVal > 0 ? 1.0 : 0.3<br>
+        <span style="color:var(--text2);">// 矩形波ON/OFFで「バババ」音を再現</span><br>
+        <span style="color:var(--text2);">// ピッチは変えない (実車同様RPMは維持)</span>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>ピッチ計算 (locaCarcontrollerと同一アルゴリズム)</h4>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        <span style="color:var(--text2);">// リフレクションで現在ギアと速度上限を取得</span><br>
+        normalizedSpeed = speedKmh / calculatedSpeedLimits[gear]<br>
+        basePitch = Lerp(0.4, 1.9, normalizedSpeed)<br><br>
+        <span style="color:var(--text2);">// スムージング (急激なピッチ変化を防止)</span><br>
+        source.pitch = Lerp(current, basePitch, dt &times; 10)
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">ギアごとに速度を正規化するため、シフトアップ時にピッチが自然に落ちて再び上昇する、実車と同じ挙動が得られる。</p>
+    </div>
+  </div>
+
+  <!-- EJ257 Boxer Engine Sound -->
+  <div class="detail-block">
+    <h3>&#128296; EJ257 ボクサーエンジン + ターボサウンド <span class="badge badge-blue">BOXER</span></h3>
+    <p class="desc">CarBodyKit.cs内蔵 - 水平対向4気筒特有の不等間隔排気パルス + ターボホイッスル + ブローオフバルブの3レイヤー合成。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> ボクサーエンジンの「ドロドロ」音の正体は不等間隔排気。通常の直4は等間隔点火(180°/180°/180°/180°)だが、水平対向では排気系統のレイアウトにより、聴覚上のパルス間隔が不均等になる。<code>unevenRatio = 0.38</code>（38:62比）でこれを模擬。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>Layer 1: ボクサーランブル</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 点火周波数107Hz, 不等間隔比0.38</span><br>
+          phase = (t &times; 107) % 1.0<br><br>
+          <span style="color:var(--text2);">// パルス1: 主点火</span><br>
+          d1 = phase<br>
+          if d1 &lt; 0.35:<br>
+          &nbsp; env = exp(-d1 &times; 20)<br>
+          &nbsp; p1 = env &times; (sin(12&pi;d) &times; 1.0<br>
+          &nbsp;&nbsp; + sin(4&pi;d) &times; 0.8 + sin(8&pi;d) &times; 0.4)<br><br>
+          <span style="color:var(--text2);">// パルス2: 不等間隔パルス</span><br>
+          d2 = (phase - 0.38 + 1) % 1<br>
+          <span style="color:var(--text2);">// 同じ波形、位相を38%オフセット</span><br><br>
+          raw = p1 + p2<br>
+          output = LPF(raw, 0.28) + mech_noise &times; 0.05
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>Layer 2: ターボホイッスル</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 基本周波数3500Hz + 2倍音7000Hz</span><br>
+          whine = sin(t &times; 3500 &times; 2&pi;) &times; 0.65<br>
+          harm = sin(t &times; 7000 &times; 2&pi;) &times; 0.25<br>
+          <span style="color:var(--text2);">// 47Hz振幅変調(コンプレッサー回転揺らぎ)</span><br>
+          mod = 1 + sin(t &times; 47 &times; 2&pi;) &times; 0.25<br><br>
+          <span style="color:var(--text2);">// ブースト連動</span><br>
+          targetBoost = throttle &times; Clamp01((rpm-0.2)/0.3)<br>
+          volume = turboWhineVol &times; currentBoost<br>
+          pitch = Lerp(0.5, 1.8, boost &times; normalizedRPM)
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>Layer 3: ブローオフバルブ (BOV)</h4>
+        <p>スロットルを急閉した時に余剰ブースト圧を放出する音。2フェーズ合成。</p>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 発動条件</span><br>
+          throttleDrop > 0.5 AND prevBoost > 0.4<br><br>
+          <span style="color:var(--text2);">// Phase 1 (0-0.15s): 初期エアバースト</span><br>
+          env = exp(-t &times; 10)<br>
+          sample = env &times; (hiss &times; 0.7 + BP_2kHz &times; 0.5)<br><br>
+          <span style="color:var(--text2);">// Phase 2 (0.15-0.6s): フラッター</span><br>
+          flutterEnv = exp(-ft &times; 4)<br>
+          pulse = |sin(ft &times; 25&pi;)| > 0.6 ? 1 : 0<br>
+          sample = env &times; pulse &times; (noise + tone_800Hz)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">Phase 1は圧力放出の「プシュー」、Phase 2はバルブのフラッター振動。25Hzの矩形波パルスでバルブの断続的な開閉を模擬。</p>
+      </div>
+      <div class="spec-item">
+        <h4>ブーストモデル</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 非対称追従 (spool up遅い, ブースト抜け速い)</span><br>
+          targetBoost = throttle &times; Clamp01((rpm-0.2)/0.3)<br>
+          rate = (target > current) ? 3 : 8<br>
+          currentBoost = Lerp(current, target, dt &times; rate)<br><br>
+          <span style="color:var(--text2);">// ↑ ブースト上昇3Hz, 低下8Hz</span><br>
+          <span style="color:var(--text2);">// スプールアップ約0.3秒, 抜け約0.12秒</span>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">RPM 20%以下ではブーストゼロ（タービン未作動）。20-50%のゾーンでリニアに上昇し、50%以上でフルブースト。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crash Sound -->
+  <div class="detail-block">
+    <h3>&#128165; 衝突サウンド <span class="badge badge-green">COLLISION</span></h3>
+    <p class="desc">CrashSound.cs - OnCollisionEnterで衝突相対速度を取得し、速度に比例した音量でワンショット再生。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>速度-音量マッピング</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          relativeSpeed = collision.relativeVelocity.magnitude<br><br>
+          if relativeSpeed &ge; 5 m/s:<br>
+          &nbsp; t = InverseLerp(5, 30, relativeSpeed)<br>
+          &nbsp; volume = Lerp(0.2, 1.0, t)<br>
+          &nbsp; PlayOneShot(crashClip, volume)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">5m/s(18km/h)以下の軽い接触は無音。30m/s(108km/h)以上で最大音量。3Dサウンド(spatialBlend=1)で衝突位置から音が聞こえる。</p>
+      </div>
+      <div class="spec-item">
+        <h4>設計意図</h4>
+        <p style="color:var(--text2); font-size:0.88rem;">
+          <strong>なぜPlayOneShotか:</strong> Playだと前の音が止まるが、PlayOneShotは重複再生可能。多重クラッシュ時に音が途切れない。<br><br>
+          <strong>なぜInverseLerpか:</strong> 線形マッピングだと低速衝突の音量変化が不自然。InverseLerpで閾値内を0-1に正規化し、Lerpで最小音量0.2を保証。完全な無音衝突を避ける。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Full-bleed: Pitlane -->
 <div class="img-break">
   <img src="img/pitlane.png" alt="Pit lane" class="parallax-img">
@@ -1570,38 +2072,267 @@
 <section id="systems">
   <div class="section-header">
     <div class="label">Systems</div>
-    <h2>レース管理システム</h2>
-    <p>カウントダウン、順位管理、ラップ計測を統合的に制御</p>
+    <h2>レース管理 &amp; インフラ</h2>
+    <p>カウントダウン、順位管理、ラップ計測、カメラ、車両スポーンを統合的に制御するインフラレイヤー</p>
   </div>
 
-  <div class="spec-grid">
-    <div class="detail-block" style="margin-bottom:0">
-      <h3>&#9201; カウントダウン</h3>
-      <p class="desc">RaceCountdown.cs</p>
-      <p style="color:var(--text2); font-size:0.9rem;">
-        画面中央に大文字で 3 &rarr; 2 &rarr; 1 &rarr; GO! を表示。GO!の1秒後にフェードアウト。カウント中は全車両の canMove = false で停止。完了時に EnableMovement() を全車に送信。
+  <!-- Race Countdown Detail -->
+  <div class="detail-block">
+    <h3>&#9201; レースカウントダウン <span class="badge badge-red">START</span></h3>
+    <p class="desc">RaceCountdown.cs - コルーチンベースの3秒カウントダウン。UIを動的に生成し、完了後に全車両の移動を許可。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> カウントダウンUIはプレハブに依存せず、コードから動的に生成。Canvas検索→テキスト生成→フォントはOS標準Arialを動的ロード。これにより、どのシーンにドロップしても動作するポータブルな設計。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>シーケンスフロー</h4>
+        <div class="flow">
+          <div class="flow-step">3 (白)</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">2 (白)</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">1 (白)</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">GO! (緑)</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">0.5sフェード</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">UI破棄</div>
+        </div>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// GO!後の全車有効化</span><br>
+          FindObjectsOfType&lt;localCarcontroller&gt;()<br>
+          &nbsp;&nbsp;.ForEach(p =&gt; p.EnableMovement())<br>
+          FindObjectsOfType&lt;RecordingCPUController&gt;()<br>
+          &nbsp;&nbsp;.ForEach(ai =&gt; ai.EnableMovement())
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>動的UI生成</h4>
+        <ul>
+          <li>既存Canvasを検索、無ければ新規作成</li>
+          <li>Font: <code>CreateDynamicFontFromOSFont("Arial", 200)</code></li>
+          <li>Outline追加: effectDistance=(4,-4), 黒</li>
+          <li>アンカー: 画面中央 (0.5, 0.5)</li>
+          <li>フェードアウト: alpha 1→0 を0.5秒で線形補間</li>
+          <li>完了後: <code>Destroy(textObj)</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Race Position Manager Detail -->
+  <div class="detail-block">
+    <h3>&#127942; 順位管理システム <span class="badge badge-purple">RANKING</span></h3>
+    <p class="desc">RacePositionManager.cs - C#リフレクションで全AI車両の順位とブーストファクターをリアルタイム更新。レコーディングデータを共通基準軸として全車の進行度を統一的に計算。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> 順位計算の最大の課題は「全車が同じコースを走っている保証がない」こと。このシステムでは、1台分のレコーディングデータ（約400-800ポイント）を基準軸として、全車の位置を最近傍探索で投影する。コースのショートカットや逆走も正しく検出できる。<br>
+      <strong>参考:</strong> F1ゲームの順位計算でもセクターベースの進行度追跡が標準手法。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>アーキテクチャ: Reflection Bridge</h4>
+        <p>RecordingCPUControllerのprivateフィールドにReflectionでアクセス。キャッシュ済みFieldInfoで高速化。</p>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// Start()でReflectionフィールドをキャッシュ</span><br>
+          fPts = typeof(RecordingCPUController)<br>
+          &nbsp;&nbsp;.GetField("points", NonPublic | Instance)<br>
+          fRank = ...GetField("currentRank", ...)<br>
+          fBoost = ...GetField("rankBoostFactor", ...)<br><br>
+          <span style="color:var(--text2);">// Update()で読み書き (0.15秒間隔)</span><br>
+          var pts = fPts.GetValue(car) as List&lt;LapDataPoint&gt;<br>
+          fRank.SetValue(car, rank)<br>
+          fBoost.SetValue(car, (rank-1)/(total-1))
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>進行度計算アルゴリズム</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 1. 最近傍点探索 (O(N) ブルートフォース)</span><br>
+          idx = argmin(|pos - refPoints[i]|&sup2;)<br>
+          <span style="color:var(--text2);">// XZ平面距離のみ (Y無視)</span><br><br>
+          <span style="color:var(--text2);">// 2. ラップ検出 (75%→25%のラップアラウンド)</span><br>
+          if prevIdx > N&times;0.75 AND curIdx &lt; N&times;0.25:<br>
+          &nbsp; lapCount++<br><br>
+          <span style="color:var(--text2);">// 3. 進行度 (周回数 + コース内位置)</span><br>
+          progress = lapCount + idx / refPointsCount
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>プレイヤー順位の決定</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          playerProg = UpdateProgress(playerId, pos)<br>
+          aheadCount = count(cpuProg > playerProg)<br>
+          playerRank = aheadCount + 1<br><br>
+          <span style="color:var(--text2);">// UI表示: "3rd / 17  Lap 2/8"</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>レース終了処理</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          if playerLap &ge; totalLaps:<br>
+          &nbsp; Time.timeScale = 0 <span style="color:var(--text2);">// 一時停止</span><br>
+          &nbsp; ShowFinishResult(rank, total)<br>
+          &nbsp; <span style="color:var(--text2);">// 3秒後に "title" シーンへ遷移</span><br><br>
+          <span style="color:var(--text2);">// 順位色: 1st=金, 2-3位=シアン, 他=白</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lap Recorder Detail -->
+  <div class="detail-block">
+    <h3>&#128190; ラップレコーダー <span class="badge badge-blue">RECORDING</span></h3>
+    <p class="desc">LapRecorder.cs - プレイヤーの走行データを20Hzでサンプリングし、AI走行の基盤データとしてJSON出力。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> レコーディングAIの品質は記録データの品質に直結する。20Hz (0.05秒間隔) は、200km/h走行時でも約2.8m間隔のサンプリングとなり、Catmull-Rom補間と組み合わせれば十分な精度。60Hzにするとデータ量が3倍になるが、スプライン補間の精度向上は僅か。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>LapDataPoint データ構造</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 1フレーム = 52バイト (13 float)</span><br>
+          time: float <span style="color:var(--text2);">// 記録開始からの秒数</span><br>
+          posX, posY, posZ: float <span style="color:var(--text2);">// ワールド座標</span><br>
+          rotX, rotY, rotZ, rotW: float <span style="color:var(--text2);">// Quaternion</span><br>
+          speed: float <span style="color:var(--text2);">// velocity.magnitude</span><br>
+          velX, velY, velZ: float <span style="color:var(--text2);">// 速度ベクトル</span><br>
+          steerAngle: float <span style="color:var(--text2);">// WheelCollider実値</span><br>
+          motorTorque: float <span style="color:var(--text2);">// 後輪トルク実値</span><br>
+          brakeTorque: float <span style="color:var(--text2);">// 前輪ブレーキ実値</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>記録フロー</h4>
+        <div class="flow">
+          <div class="flow-step">R キー or ゴール通過</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">20Hz サンプリング</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">ゴール通過 or R キー</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">JSON 保存</div>
+        </div>
+        <ul style="margin-top:12px; color:var(--text2); font-size:0.88rem;">
+          <li>WheelCollider検出: 子オブジェクトの位置で前後左右を自動判定、フォールバックとしてw1-w4名前検索</li>
+          <li>最低10ポイント以上で保存（ノイズ記録防止）</li>
+          <li>ファイル名: <code>lap_1m23-45s.json</code> (ラップタイム自動命名)</li>
+          <li>保存先: <code>Desktop/lap_data/</code> (自動作成)</li>
+          <li>デバッグ: 画面右上に赤字で "REC 12.5s (250pts)" 表示</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>JSON出力フォーマット (LapRecordingData)</h4>
+      <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+        {<br>
+        &nbsp; "trackName": "RaceTrack_01",<br>
+        &nbsp; "totalTime": 83.45,<br>
+        &nbsp; "pointCount": 1669,<br>
+        &nbsp; "recordInterval": 0.05,<br>
+        &nbsp; "points": [<br>
+        &nbsp;&nbsp;&nbsp; { "time": 0.0, "posX": 12.3, ... },<br>
+        &nbsp;&nbsp;&nbsp; { "time": 0.05, "posX": 12.8, ... },<br>
+        &nbsp;&nbsp;&nbsp; ...<br>
+        &nbsp; ]<br>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Camera System -->
+  <div class="detail-block">
+    <h3>&#127909; カメラシステム <span class="badge badge-orange">CAMERA</span></h3>
+    <p class="desc">4つのスクリプトで構成されるカメラアーキテクチャ。チェイスカメラ + リアビュー + カメラ切替 + 衝突シェイク。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>DynamicCamera / localcamera (チェイスカメラ)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 目標位置: 車体後方+上方</span><br>
+          desired = target.pos - target.fwd &times; distance<br>
+          &nbsp;&nbsp;+ Vector3.up &times; height + shakeOffset<br><br>
+          <span style="color:var(--text2);">// SmoothDamp追従 (スプリング的挙動)</span><br>
+          smoothed = SmoothDamp(current, desired,<br>
+          &nbsp;&nbsp;ref velocity, 0.125)<br><br>
+          <span style="color:var(--text2);">// 常に車を注視</span><br>
+          transform.LookAt(target)
+        </div>
+        <table class="param-table" style="margin-top:12px;">
+          <tr><th>パラメータ</th><th>値</th></tr>
+          <tr><td>追従距離</td><td>10 m</td></tr>
+          <tr><td>高さ</td><td>3 m</td></tr>
+          <tr><td>スムージング</td><td>0.125 s</td></tr>
+          <tr><td>シェイク強度</td><td>0.05 m</td></tr>
+          <tr><td>シェイク持続</td><td>0.2 s</td></tr>
+        </table>
+      </div>
+      <div class="spec-item">
+        <h4>リアビュー &amp; カメラ切替</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// リアビュー (↓キー or DPad Down)</span><br>
+          if rearView:<br>
+          &nbsp; distance = -|distance| <span style="color:var(--text2);">// 前方に配置</span><br>
+          else:<br>
+          &nbsp; distance = |distance| <span style="color:var(--text2);">// 後方に配置</span><br><br>
+          <span style="color:var(--text2);">// LookAtは常に車を向くため</span><br>
+          <span style="color:var(--text2);">// distanceを負にするだけで後方視点</span>
+        </div>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left; margin-top:12px;">
+          <span style="color:var(--text2);">// CameraSwitcher (Q or Y/△ボタン)</span><br>
+          isUsingCameraA = !isUsingCameraA<br>
+          cameraA.SetActive(isUsingCameraA)<br>
+          cameraB.SetActive(!isUsingCameraA)<br><br>
+          <span style="color:var(--text2);">// エッジ検出 (長押し防止)</span><br>
+          switchPressed = pressed AND !prevPressed
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>camera_m シングルトン (ネットワークモード用)</h4>
+      <p style="color:var(--text2); font-size:0.88rem;">
+        Photon Fusionモードでは、GameLauncherがスポーンしたプレイヤーアバターのTransformを<code>camera_m.Instance.Cinemachine.target</code>に設定。Lazy初期化パターンでシーン内のcamera_mを自動検出。重複防止のためAwakeで既存インスタンスをDestroy。
       </p>
     </div>
-    <div class="detail-block" style="margin-bottom:0">
-      <h3>&#127942; 順位管理</h3>
-      <p class="desc">RacePositionManager.cs</p>
-      <p style="color:var(--text2); font-size:0.9rem;">
-        0.2秒間隔で全車の進行度を計算。進行度 = ラップ数 + (ポイントインデックス / 総ポイント数)。プレイヤーは最寄りポイント検索で位置を推定。順位に応じてAIのブーストファクターを自動更新。
-      </p>
-    </div>
-    <div class="detail-block" style="margin-bottom:0">
-      <h3>&#9202; ラップタイマー</h3>
-      <p class="desc">GoalManager.cs</p>
-      <p style="color:var(--text2); font-size:0.9rem;">
-        トリガーベースのラップ検出（重複防止: 50秒間隔）。初回通過でタイマー開始、2回目以降でラップタイム記録。現在ラップ・前ラップ・ベストラップをTMPで表示。表示形式: MM:SS.CC。
-      </p>
-    </div>
-    <div class="detail-block" style="margin-bottom:0">
-      <h3>&#128190; ラップ記録</h3>
-      <p class="desc">LapRecorder.cs</p>
-      <p style="color:var(--text2); font-size:0.9rem;">
-        0.05秒間隔(20Hz)で車両状態を記録。位置・回転・速度・ステア角・トルク値を保存。ゴール通過で自動分割。JSON形式でDesktop/lap_dataフォルダに出力。最低10ポイント以上で保存。
-      </p>
+  </div>
+
+  <!-- Speed Display & Car Spawner -->
+  <div class="detail-block">
+    <h3>&#128200; HUD &amp; スポーンシステム</h3>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>速度表示 (sokudo.cs)</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          speedKMH = rb.velocity.magnitude &times; 3.6 &times; 1.4<br>
+          <span style="color:var(--text2);">// &times;1.4 = 見た目の速度感補正</span><br>
+          <span style="color:var(--text2);">// 実速度100km/hが表示140km/hに</span><br>
+          speedText.text = speedKMH.ToString("F1") + " km/h"
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">ゲームプレイ上、物理速度そのままだとプレイヤーに「遅い」と感じられるため、表示速度に1.4倍の補正係数を乗算。多くの市販レースゲームでも同様の手法を採用している。</p>
+      </div>
+      <div class="spec-item">
+        <h4>車両セレクト (car_sporner.cs)</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// game_managerが選択番号を保持</span><br>
+          carIdx = game_manager.Instance.car_num - 1<br>
+          carlist[carIdx].SetActive(true)<br><br>
+          <span style="color:var(--text2);">// Awakeで実行</span><br>
+          <span style="color:var(--text2);">// carlist[] = Inspector上でプレハブ配列を設定</span>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">タイトル画面で選んだ車番号をgame_managerシングルトンで引き継ぎ、レースシーンのAwakeで対応するGameObjectをアクティブ化。非アクティブなプレハブはロードされるが描画・物理は実行されない。</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1644,6 +2375,95 @@
   <div class="img-break-tint"></div>
   <div class="img-break-overlay"></div>
 </div>
+
+<!-- NETWORKING -->
+<section id="networking">
+  <div class="section-header">
+    <div class="label">Networking</div>
+    <h2>マルチプレイヤー (Photon Fusion)</h2>
+    <p>Photon Fusion Shared Modeによるリアルタイムオンライン対戦アーキテクチャ</p>
+  </div>
+
+  <div class="callout">
+    <strong>レースゲーム開発者へ:</strong> Photon Fusionは従来のPUN2と異なり、ネットワーク同期をティックベースで行う。Shared Modeでは各クライアントが自分のオブジェクトの状態権限(State Authority)を持ち、他のオブジェクトの状態はネットワークから受信する。レースゲームでは、各プレイヤーが自車の物理演算を完全に行い、結果だけを同期する方式が最も自然。<br>
+    <strong>参考:</strong> <em>Photon Fusion Documentation</em> - Shared Mode / State Authority pattern
+  </div>
+
+  <div class="detail-block">
+    <h3>&#127760; GameLauncher - セッション管理 <span class="badge badge-blue">NETWORK</span></h3>
+    <p class="desc">GameLauncher.cs - INetworkRunnerCallbacksを実装し、セッション参加からアバタースポーンまでを制御。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>接続フロー</h4>
+        <div class="flow">
+          <div class="flow-step">NetworkRunner生成</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">コールバック登録</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">StartGame (Shared)</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">OnPlayerJoined</div>
+          <span class="flow-arrow">&rarr;</span>
+          <div class="flow-step">Avatar Spawn</div>
+        </div>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 非同期セッション開始</span><br>
+          var result = await networkRunner.StartGame(<br>
+          &nbsp;&nbsp;new StartGameArgs {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;GameMode = GameMode.Shared<br>
+          &nbsp;&nbsp;});<br><br>
+          <span style="color:var(--text2);">// 自分のプレイヤーが参加した時</span><br>
+          if (player == runner.LocalPlayer) {<br>
+          &nbsp;&nbsp;var spawn = Random.insideUnitCircle &times; 5<br>
+          &nbsp;&nbsp;var pos = new Vector3(spawn.x, 2, spawn.y)<br>
+          &nbsp;&nbsp;var obj = runner.Spawn(prefab, pos, rot)<br>
+          &nbsp;&nbsp;obj.GetComponent&lt;CarController&gt;().isthis = true<br>
+          &nbsp;&nbsp;camera_m.Instance.Cinemachine.target = obj<br>
+          }
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>設計ポイント</h4>
+        <ul>
+          <li><strong>targetFrameRate = 40:</strong> ネットワーク同期のためフレームレート制限。Fusionのtick rateと整合</li>
+          <li><strong>Shared Mode:</strong> 各クライアントが自車の物理を計算。ホスト不要でP2P的に動作</li>
+          <li><strong>スポーン位置:</strong> 半径5mの円内にランダム配置。衝突を避けるためY=2mに浮かせてスポーン</li>
+          <li><strong>isthis フラグ:</strong> 自分のアバターかどうかをCarControllerに通知。入力処理の有効/無効を制御</li>
+          <li><strong>カメラ接続:</strong> camera_mシングルトンを介して動的にターゲット設定</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-block">
+    <h3>&#128663; CarController - ネットワーク車両 <span class="badge badge-purple">FUSION</span></h3>
+    <p class="desc">CarController.cs (~996行) - localCarcontrollerのネットワーク版。Photon FusionのNetworkBehaviourを継承し、入力/状態の同期を行う。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ローカル vs ネットワーク</h4>
+        <table class="param-table">
+          <tr><th>要素</th><th>localCarcontroller</th><th>CarController</th></tr>
+          <tr><td>継承元</td><td>MonoBehaviour</td><td>NetworkBehaviour</td></tr>
+          <tr><td>物理更新</td><td>FixedUpdate</td><td>FixedUpdateNetwork</td></tr>
+          <tr><td>入力</td><td>直接読み取り</td><td>isthisフラグで判定</td></tr>
+          <tr><td>状態管理</td><td>ローカル変数</td><td>[Networked]属性</td></tr>
+          <tr><td>使用シーン</td><td>オフライン/AI基盤</td><td>オンライン対戦</td></tr>
+        </table>
+      </div>
+      <div class="spec-item">
+        <h4>Shared Modeの利点</h4>
+        <ul>
+          <li>各プレイヤーが自車の物理を完全に計算 → 入力遅延なし</li>
+          <li>状態権限が分散 → ホストボトルネックなし</li>
+          <li>相手車両はネットワークから補間 → 帯域効率が良い</li>
+          <li>オフラインコードの大部分をそのまま流用可能</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- FOOTER -->
 <footer>
@@ -1728,8 +2548,11 @@ document.addEventListener('DOMContentLoaded', () => {
     'player':       { accent: '#2e86de', accent2: '#54a0e8' },
     'ai-recording': { accent: '#20bf6b', accent2: '#3dd68c' },
     'ai-autodrive': { accent: '#8854d0', accent2: '#a07de0' },
+    'ai-ml':        { accent: '#3949ab', accent2: '#5c6bc0' },
+    'audio':        { accent: '#00acc1', accent2: '#26c6da' },
     'systems':      { accent: '#e67e22', accent2: '#f0993e' },
     'controls':     { accent: '#d4a017', accent2: '#e6b830' },
+    'networking':   { accent: '#5c6bc0', accent2: '#7986cb' },
   };
 
   document.querySelectorAll('.split-img').forEach((el, i) => {
