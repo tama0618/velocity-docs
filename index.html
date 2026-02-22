@@ -30,7 +30,6 @@
   #ai-autodrive   { --s-accent: #8854d0; --s-accent2: #a07de0; --s-glow: rgba(136,84,208,0.08); }
   #systems        { --s-accent: #e67e22; --s-accent2: #f0993e; --s-glow: rgba(230,126,34,0.08); }
   #controls       { --s-accent: #d4a017; --s-accent2: #e6b830; --s-glow: rgba(212,160,23,0.08); }
-  #ai-ml          { --s-accent: #3949ab; --s-accent2: #5c6bc0; --s-glow: rgba(57,73,171,0.08); }
   #audio          { --s-accent: #00acc1; --s-accent2: #26c6da; --s-glow: rgba(0,172,193,0.08); }
 
   /* Inherit section accent into children */
@@ -540,7 +539,6 @@
     <li><a href="#player">Player</a></li>
     <li><a href="#ai-recording">AI: Recording</a></li>
     <li><a href="#ai-autodrive">AI: AutoDrive</a></li>
-    <li><a href="#ai-ml">ML-Agents</a></li>
     <li><a href="#audio">Audio</a></li>
     <li><a href="#systems">Systems</a></li>
     <li><a href="#controls">Controls</a></li>
@@ -556,14 +554,13 @@
   <div class="hero-content">
     <h1>VELOCITY</h1>
     <p class="subtitle">
-      実車データに基づくシミュレーション物理、3種類のAIシステム、プロシージャルエンジンサウンド。<br>
+      実車データに基づくシミュレーション物理、2種類のAIシステム、プロシージャルエンジンサウンド。<br>
       ABS/TCS/ESC搭載、17台同時走行。本格レーシング体験をUnityで。
     </p>
     <div class="tags">
       <a href="#player" class="tag">Simulation Physics</a>
       <a href="#ai-recording" class="tag">Recording AI</a>
       <a href="#ai-autodrive" class="tag">AutoDrive AI</a>
-      <a href="#ai-ml" class="tag">ML-Agents AI</a>
       <a href="#audio" class="tag">Procedural Audio</a>
       <a href="#controls" class="tag">Controls</a>
     </div>
@@ -575,7 +572,7 @@
   <div class="section-header">
     <div class="label">About</div>
     <h2>ゲーム概要</h2>
-    <p>Unityで構築した本格レーシングシミュレーション。リアルな車両物理と3種類のAIシステム、プロシージャルオーディオ、Photon Fusionオンライン対戦で、毎回異なるレース展開を実現。</p>
+    <p>Unityで構築した本格レーシングシミュレーション。リアルな車両物理と2種類のAIシステム、プロシージャルオーディオで、毎回異なるレース展開を実現。</p>
   </div>
 
   <div class="features">
@@ -598,11 +595,6 @@
       <div class="icon icon-purple">&#129504;</div>
       <h3>ウェイポイントAI</h3>
       <p>Catmull-Romスプライン補間によるレーシングライン最適化。速度感応ルックアヘッド、障害物レイキャスト回避。</p>
-    </div>
-    <div class="feature-card">
-      <div class="icon icon-gold">&#129302;</div>
-      <h3>強化学習AI</h3>
-      <p>ML-Agentsによる強化学習AI。40次元観察空間、報酬設計でクリーンな追い抜きとスリップストリーム活用を自律学習。</p>
     </div>
     <div class="feature-card">
       <div class="icon icon-orange">&#127925;</div>
@@ -1879,151 +1871,6 @@
   <div class="img-break-overlay"></div>
 </div>
 
-<!-- ML-AGENTS AI -->
-<section id="ai-ml">
-  <div class="section-header">
-    <div class="label">AI Type 3</div>
-    <h2>強化学習AI (ML-Agents)</h2>
-    <p>RacingAgent.cs - Unity ML-Agentsによる強化学習ベースのレーシングAI。観察→行動→報酬のサイクルで、速くてクリーンな走りを自律的に学習。</p>
-  </div>
-
-  <div class="callout">
-    <strong>レースゲーム開発者へ:</strong> 強化学習AIは「ルールを書かずに走り方を学ばせる」アプローチ。ウェイポイントAIが「こう走れ」と指示するのに対し、ML-AgentsAIは「速く走ればご褒美、ぶつかったら罰」のルールだけ与え、走り方自体はニューラルネットワークが発見する。結果、人間が想定しなかったレーシングラインや追い抜きテクニックが出現することも。<br>
-    <strong>参考文献:</strong> <em>"Unity ML-Agents Toolkit"</em> - Unity Technologies, GitHub: ml-agents/docs
-  </div>
-
-  <!-- Observation Space -->
-  <div class="detail-block">
-    <h3>&#128065; 観察空間 (Observations) <span class="badge badge-blue">INPUT</span></h3>
-    <p class="desc">エージェントが毎フレーム「見る」情報。合計40次元のベクトル観察。</p>
-
-    <table class="param-table">
-      <tr><th>カテゴリ</th><th>次元数</th><th>内容</th></tr>
-      <tr><td>自車状態</td><td>6</td><td>速度(/50), ヨーレート(/10), ステア, スロットル, 横速度(/20), 前方速度(/50)</td></tr>
-      <tr><td>タイヤ状態</td><td>4</td><td>4輪のスリップ量 (前方+横方の合計, 0-1正規化)</td></tr>
-      <tr><td>コース情報</td><td>7</td><td>次WP方向(3D), WP距離(/50), カーブ角(/90), コーナー距離(/100), ライン偏差</td></tr>
-      <tr><td>壁距離</td><td>9</td><td>-80°〜+80°の9方向レイキャスト, 30m, 正規化(/30)</td></tr>
-      <tr><td>相手車両</td><td>12</td><td>近接3台: 相対X(/10), 相対Z(/30), 接近中?, 速度(/50)</td></tr>
-      <tr><td>レース状況</td><td>2</td><td>現在順位(/10), ラップ進捗(0-1)</td></tr>
-    </table>
-
-    <div class="spec-item" style="margin-top:16px;">
-      <h4>正規化の設計意図</h4>
-      <p style="color:var(--text2); font-size:0.88rem;">
-        全観察値を概ね[-1, 1]の範囲に正規化。ニューラルネットワークは入力スケールに敏感なため、物理単位(m/s, rad/s)をそのまま使うと学習が不安定に。速度は50m/s(180km/h)、距離は30-50m、角度は90°を基準値として選択。
-      </p>
-    </div>
-  </div>
-
-  <!-- Action Space -->
-  <div class="detail-block">
-    <h3>&#127919; 行動空間 (Actions) <span class="badge badge-green">OUTPUT</span></h3>
-    <p class="desc">連続値2次元: ステアリング[-1, 1] + スロットル/ブレーキ[-1, 1]。</p>
-
-    <div class="spec-grid">
-      <div class="spec-item">
-        <h4>ステアリング制御</h4>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// 速度依存の最大ステア角</span><br>
-          speedFactor = Clamp01(speedKmh / 120)<br>
-          maxSteer = Lerp(32&deg;, 6&deg;, speedFactor)<br>
-          <span style="color:var(--text2);">// ↑ 高速では6°まで制限 (スピン防止)</span><br><br>
-          <span style="color:var(--text2);">// スムージング (高速ほど遅い)</span><br>
-          steerSpeed = Lerp(8, 2, speedFactor)<br>
-          smoothed = Lerp(current, target, dt &times; steerSpeed)<br><br>
-          <span style="color:var(--text2);">// 障害物回避を加算</span><br>
-          final = Clamp(steering + avoidCorrection, -1, 1)
-        </div>
-      </div>
-      <div class="spec-item">
-        <h4>速度制御</h4>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// throttle > 0: 加速</span><br>
-          torque = gearTorques[gear] &times; throttle<br>
-          &nbsp;&nbsp;&times; Lerp(1, accelFactor, gear/maxGear)<br>
-          if speedKmh > gearSpeedLimit: torque = 0<br><br>
-          <span style="color:var(--text2);">// throttle < 0: ブレーキ</span><br>
-          brake = |throttle| &times; 3000 N&middot;m<br><br>
-          <span style="color:var(--text2);">// 駆動方式: FR (後輪駆動)</span><br>
-          wheelRL.motorTorque = torque<br>
-          wheelRR.motorTorque = torque
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reward System -->
-  <div class="detail-block">
-    <h3>&#127942; 報酬設計 (Reward Shaping) <span class="badge badge-red">REWARD</span></h3>
-    <p class="desc">報酬設計はRL-AIの品質を決める最重要要素。「速さ」と「マナー」のバランスを取る多層報酬。</p>
-
-    <div class="callout">
-      <strong>レースゲーム開発者へ:</strong> 報酬設計のコツは「やってほしいことに正の報酬、やってほしくないことに負の報酬」だが、報酬の大きさのバランスが重要。チェックポイント(+1.0)よりオーバーテイク(+5.0)を大きくすると、追い抜きに積極的なAIになる。逆にペナルティが大きすぎると消極的になる。<br>
-      <strong>参考:</strong> <em>"Reward Shaping in RL"</em> - Andrew Ng, ICML 1999
-    </div>
-
-    <table class="param-table">
-      <tr><th>報酬</th><th>値</th><th>条件</th></tr>
-      <tr><td style="color:var(--green);">前進速度</td><td>+0.001 &times; v</td><td>毎フレーム、前方速度に比例</td></tr>
-      <tr><td style="color:var(--green);">チェックポイント通過</td><td>+1.0</td><td>ウェイポイント15m以内</td></tr>
-      <tr><td style="color:var(--green);">ラップ完走</td><td>+10.0</td><td>全ウェイポイント通過</td></tr>
-      <tr><td style="color:var(--green);">クリーン追い抜き</td><td>+5.0</td><td>接触なしで順位上昇</td></tr>
-      <tr><td style="color:var(--green);">接触あり追い抜き</td><td>+2.0</td><td>接触ありで順位上昇</td></tr>
-      <tr><td style="color:var(--green);">コーナー追い抜きボーナス</td><td>+4.0</td><td>カーブ中のクリーン追い抜き</td></tr>
-      <tr><td style="color:var(--green);">スリップストリーム活用</td><td>+0.05</td><td>前車の後方5-25m、横2m以内</td></tr>
-      <tr><td style="color:var(--accent);">コース逸脱</td><td>-0.5</td><td>OffTrack/Grassタグ検知</td></tr>
-      <tr><td style="color:var(--accent);">逆走</td><td>-2.0</td><td>WP方向との内積 &lt; -0.5</td></tr>
-      <tr><td style="color:var(--accent);">軽接触</td><td>-0.5</td><td>低速での車両接触</td></tr>
-      <tr><td style="color:var(--accent);">サイドアタック</td><td>-2.0</td><td>横方向からの車両接触</td></tr>
-      <tr><td style="color:var(--accent);">追突</td><td>-3.0</td><td>前方車両への追突</td></tr>
-      <tr><td style="color:var(--accent);">順位を失う</td><td>-3.0</td><td>他車に抜かれた</td></tr>
-      <tr><td style="color:var(--accent);">蛇行ブロック</td><td>-2.0</td><td>ストレートで2回以上ライン変更</td></tr>
-      <tr><td style="color:var(--accent);">タイムアウト</td><td>-1.0</td><td>120秒以内に完走できず</td></tr>
-    </table>
-  </div>
-
-  <!-- Avoidance & Physics -->
-  <div class="detail-block">
-    <h3>&#128736; 障害物回避 &amp; 車両物理</h3>
-
-    <div class="spec-grid">
-      <div class="spec-item">
-        <h4>回避ステアリング (レイキャストベース)</h4>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// 前方障害物: 25m, 強度0.7</span><br>
-          <span style="color:var(--text2);">// 左右壁: 15m</span><br><br>
-          avoidCorrection = CalculateAvoidanceSteering()<br>
-          if |correction| > 0.01:<br>
-          &nbsp; finalSteer = Clamp(steer + correction, -1, 1)
-        </div>
-      </div>
-      <div class="spec-item">
-        <h4>車両物理 (locaCarcontroller v26準拠)</h4>
-        <ul>
-          <li>WheelColliderフリクション: プレイヤーと完全同一</li>
-          <li>サスペンション: 42,000N/m, 10,000Ns/m</li>
-          <li>後輪stiffness: 1.25倍</li>
-          <li>重心: (0, -0.45, 0.05)</li>
-          <li>ダウンフォース: 1.8 &times; v&sup2;</li>
-          <li>アンチロールバー: F=5500, R=3500</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="spec-item" style="margin-top:16px;">
-      <h4>エピソード管理</h4>
-      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
-        <span style="color:var(--text2);">// OnEpisodeBegin: 完全リセット</span><br>
-        position = spawnPosition<br>
-        velocity = angularVelocity = Vector3.zero<br>
-        checkpoint = gear = 0, steering = throttle = 0<br><br>
-        <span style="color:var(--text2);">// 終了条件</span><br>
-        episodeTimer > 120s: EndEpisode() <span style="color:var(--text2);">// タイムアウト</span>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Full-bleed: Movie_012 gameplay -->
 <div class="img-break">
   <video autoplay muted loop playsinline>
@@ -2661,7 +2508,6 @@ document.addEventListener('DOMContentLoaded', () => {
     'player':       { accent: '#2e86de', accent2: '#54a0e8' },
     'ai-recording': { accent: '#20bf6b', accent2: '#3dd68c' },
     'ai-autodrive': { accent: '#8854d0', accent2: '#a07de0' },
-    'ai-ml':        { accent: '#3949ab', accent2: '#5c6bc0' },
     'audio':        { accent: '#00acc1', accent2: '#26c6da' },
     'systems':      { accent: '#e67e22', accent2: '#f0993e' },
     'controls':     { accent: '#d4a017', accent2: '#e6b830' },
