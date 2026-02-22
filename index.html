@@ -861,6 +861,93 @@
     </div>
   </div>
 
+  <!-- Advanced Tire Physics -->
+  <div class="detail-block">
+    <h3>&#9881; 高度タイヤ物理 &amp; 触覚フィードバック <span class="badge badge-blue">ADVANCED</span></h3>
+    <p class="desc">タイヤリラクゼーション、トレイルブレーキング、トルクコンバーター、プロシージャル路面音、ゲームパッド触覚。locaCarcontroller v29の先進物理。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> タイヤリラクゼーションとは、タイヤが滑り始めてから最大グリップに達するまでの遅延を模擬するモデル。実車のタイヤはゴムの弾性変形に時間がかかるため、ステアリングを切った瞬間にはグリップが発生せず、数十ミリ秒後にピークに達する。これがないと操作がデジタル的で、「タイヤが路面を掴む感覚」が失われる。<br>
+      <strong>参考文献:</strong> <em>"Race Car Vehicle Dynamics"</em> - Milliken &amp; Milliken, SAE International, Chapter 2: Tire Behavior
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>タイヤリラクゼーション (指数スムージング)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 速度依存の追従レート</span><br>
+          rate = Max(speedMS / 0.5, 14)<br>
+          lerpFactor = 1 - exp(-rate &times; dt)<br><br>
+          <span style="color:var(--text2);">// 目標stiffnessへの指数減衰追従</span><br>
+          smoothedStiffness = Lerp(current, target, lerpFactor)<br><br>
+          <span style="color:var(--text2);">// 低速(0m/s)では14Hz, 高速(28m/s)ではl56Hz</span><br>
+          <span style="color:var(--text2);">// → 高速ほど即座にグリップ変化が反映</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>トレイルブレーキング</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// ブレーキ中にステアすると前輪横グリップ増加</span><br>
+          frontSideGrip &times;= 1 + 0.35 &times; brake &times; |steer|<br><br>
+          <span style="color:var(--text2);">// コーナリング中の前後バランス制御</span><br>
+          <span style="color:var(--text2);">// 前輪: ステア中は横グリップUP</span><br>
+          frontSide &times;= Lerp(1, Lerp(1.35,1.05,speedBlend), |steer|)<br>
+          <span style="color:var(--text2);">// 後輪: 低速で前方グリップUP, 高速で横グリップUP</span><br>
+          rearSide &times;= Lerp(1, Lerp(1.0,1.4,speedBlend), |steer|)<br>
+          rearFwd &times;= Lerp(1, Lerp(1.4,1.0,speedBlend), |steer|)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">実車でブレーキングしながらターンインすると前輪荷重が増え、グリップが向上する現象を再現。レーシングドライバーの基本テクニック「トレイルブレーキング」を物理的にサポート。</p>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>トルクコンバーター (擬似)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// スロットルOFFでも60-80%のトルク保証</span><br>
+          minTorque = Lerp(0.6, 0.8, |steer|)<br>
+          <span style="color:var(--text2);">// ステア中はトルク増加(旋回補助)</span><br><br>
+          <span style="color:var(--text2);">// クラッチスリップの簡易模擬</span><br>
+          <span style="color:var(--text2);">// → 発進時のエンストを防止</span><br>
+          <span style="color:var(--text2);">// → コーナー出口でスムーズな加速</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>空気抵抗 &amp; ヨーダンピング</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 空気抵抗 (v29で追加)</span><br>
+          drag = coeff &times; velocity.sqrMagnitude<br>
+          rb.AddForce(-velocity.normalized &times; drag)<br>
+          coeff = 0.35 <span style="color:var(--text2);">// ダート上は+0.15</span><br><br>
+          <span style="color:var(--text2);">// パッシブヨーダンピング</span><br>
+          torque = -yawRate &times; 60 &times; mass/1500<br>
+          rb.AddTorque(up &times; torque)<br>
+          <span style="color:var(--text2);">// セルフアライニングトルクの模擬</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>プロシージャル路面音</h4>
+        <ul style="color:var(--text2); font-size:0.88rem;">
+          <li><strong>ダート:</strong> LPF白色ノイズ + ランダムな砂利クランチスパイク。スリップ量に比例した音量。</li>
+          <li><strong>ゼブラ (縁石):</strong> 30バンプ/秒のパルス列。8ms二次関数減衰の衝撃音。速度に比例したピッチ。</li>
+          <li><strong>スキッド:</strong> AudioClipベース。グリップ使用率に比例した音量。フリクションサークルの飽和度で強度計算。</li>
+        </ul>
+      </div>
+      <div class="spec-item">
+        <h4>ゲームパッド触覚 (Haptics)</h4>
+        <ul style="color:var(--text2); font-size:0.88rem;">
+          <li><strong>ダート走行:</strong> 低周波の連続ランブル。速度に比例。</li>
+          <li><strong>ゼブラ通過:</strong> 8-45Hzのパルス振動。縁石のバンプを直接伝達。</li>
+          <li><strong>衝突:</strong> 衝撃比例の減衰振動。InverseLerpで0.2-1.0にマッピング。</li>
+          <li><strong>グリップ使用率:</strong> タイヤの複合スリップ量に比例。限界域でコントローラーが振動し、限界を手で感じ取れる。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- CarBodyKit System -->
   <div class="detail-block">
     <h3>&#128295; CarBodyKit - 車種カスタマイズシステム <span class="badge badge-purple">MODULAR</span></h3>
@@ -1373,6 +1460,69 @@
     </div>
   </div>
 
+  <!-- Side-by-Side, Impact Damping, Recording Swap -->
+  <div class="detail-block">
+    <h3>&#128663; サイドバイサイド &amp; 衝突制御 <span class="badge badge-orange">BATTLE</span></h3>
+    <p class="desc">並走時の知的な制御、衝突後の安定化、最下位時の記録データ切替による追い上げ。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>サイドバイサイド検出</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 並走条件 (全て満たす)</span><br>
+          |speedDiff| &lt; 3 m/s <span style="color:var(--text2);">// 速度差小</span><br>
+          lateralDist &lt; 6m <span style="color:var(--text2);">// 横距離近い</span><br>
+          trackDist &lt; 8m <span style="color:var(--text2);">// 前後距離近い</span><br><br>
+          <span style="color:var(--text2);">// 並走時の制御</span><br>
+          1. インサイドへオフセット強制<br>
+          2. 壁スクイーズ検出 → speed &times;= 0.8<br>
+          3. ブロック回避のためレーン固定
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>衝突後の安定化 (Impact Damping)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// OnCollisionEnter時</span><br>
+          angularVelocity &times;= 0.5 <span style="color:var(--text2);">// 即座に半減</span><br>
+          impactDampenTimer = 0.8s<br><br>
+          <span style="color:var(--text2);">// タイマー中</span><br>
+          angularVelocity *= Lerp(0.95, 1.0, timer/0.8)<br>
+          <span style="color:var(--text2);">// 0.8秒かけて徐々に通常に戻す</span>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">AI車は衝突後に異常回転しやすい。即座の角速度半減 + 0.8秒の漸進的回復で、衝突後もコース上に留まりやすくなる。</p>
+      </div>
+    </div>
+
+    <div class="spec-grid" style="margin-top:16px;">
+      <div class="spec-item">
+        <h4>レコーディングデータ切替 (最下位救済)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 最下位の車は別のラップデータに切替</span><br>
+          if isLastPlace AND hasAlternateRecording:<br>
+          &nbsp; points = lastPlaceRecording.points<br>
+          &nbsp; <span style="color:var(--text2);">// より速いラップデータを再生</span><br>
+          &nbsp; <span style="color:var(--text2);">// → 自然な追い上げが発生</span>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">ラバーバンドのトルクブーストだけでは追いつけない場合の追加策。より速いプレイヤーのラップデータに切り替えることで、ライン取り自体が改善される。</p>
+      </div>
+      <div class="spec-item">
+        <h4>ブレーキライト &amp; トレイルエフェクト</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// ブレーキライト (リアルタイム制御)</span><br>
+          if braking:<br>
+          &nbsp; lightIntensity → 3.0 (maxIntensity)<br>
+          else:<br>
+          &nbsp; lightIntensity → 0 (fadeSpeed=10)<br><br>
+          <span style="color:var(--text2);">// ブレーキ痕トレイル</span><br>
+          if heavyBraking:<br>
+          &nbsp; TrailRenderer.time = 0.5s<br>
+          else:<br>
+          &nbsp; TrailRenderer.time = 0
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tire & Physics -->
   <div class="detail-block">
     <h3>&#9881; タイヤ物理 &amp; 動的グリップ</h3>
@@ -1666,6 +1816,60 @@
         boostMultiplier = 1.0 + (20 / 100) &times; rankRatio<br>
         <span style="color:var(--text2);">// 1位: &times;1.0, 最下位: &times;1.2 (最大20%ブースト)</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Advanced: Adaptive Learning, Personality, Curve Analysis -->
+  <div class="detail-block">
+    <h3>&#129504; 適応学習 &amp; パーソナリティ <span class="badge badge-purple">ADAPTIVE</span></h3>
+    <p class="desc">走行中にコーナー速度を自動調整する適応学習と、AI車両ごとに異なる運転スタイルを生成するパーソナリティシステム。</p>
+
+    <div class="callout">
+      <strong>レースゲーム開発者へ:</strong> 固定の速度マップだけだとAIは同じコーナーで何度もスピンする。適応学習は各ウェイポイントでスリップ量を監視し、次回通過時の速度係数を自動で下げる。これにより、AIはコースを「覚える」。パーソナリティは同じAIロジックでもバリエーションを生み出す簡単な手法。<br>
+      <strong>参考:</strong> <em>"AI Game Programming Wisdom"</em> - Steve Rabin, Chapter: Adaptive AI
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>適応学習 (ウェイポイント別速度補正)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// 各ウェイポイントでスリップを監視</span><br>
+          if wheelSlip > slipThreshold(0.5):<br>
+          &nbsp; speedModifier[wp] -= learningRate(0.05)<br>
+          &nbsp; speedModifier[wp] = Max(0.6, modifier)<br>
+          <span style="color:var(--text2);">// 最低60%まで減速</span><br><br>
+          <span style="color:var(--text2);">// 安定走行時の回復</span><br>
+          if stable:<br>
+          &nbsp; speedModifier[wp] += learningRate &times; 0.1<br>
+          <span style="color:var(--text2);">// 学習速度の10%で回復 → 慎重に速度を戻す</span>
+        </div>
+      </div>
+      <div class="spec-item">
+        <h4>パーソナリティ (ランダム分散)</h4>
+        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
+          <span style="color:var(--text2);">// インスタンス生成時に&plusmn;15%のランダム偏差</span><br>
+          safetyMargin &times;= Random(0.85, 1.15)<br>
+          gripFactor &times;= Random(0.85, 1.15)<br>
+          overtakeAggression &times;= Random(0.85, 1.15)<br>
+          maxPossibleSpeed &times;= Random(0.85, 1.15)<br><br>
+          <span style="color:var(--text2);">// 結果: 17台のAIが全て異なる走り方</span><br>
+          <span style="color:var(--text2);">// 攻撃的な車、慎重な車が自然に発生</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-item" style="margin-top:16px;">
+      <h4>コーナー半径計算 (ヘロンの公式)</h4>
+      <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+        <span style="color:var(--text2);">// 3ウェイポイント(三角形)から外接円の半径を求める</span><br>
+        a = |P1 - P0|, b = |P2 - P1|, c = |P0 - P2|<br>
+        s = (a + b + c) / 2 <span style="color:var(--text2);">// 半周長</span><br>
+        A = &radic;(s &times; (s-a) &times; (s-b) &times; (s-c)) <span style="color:var(--text2);">// ヘロン</span><br>
+        R = a &times; b &times; c / (4 &times; A) <span style="color:var(--text2);">// 外接円半径</span><br><br>
+        <span style="color:var(--text2);">// この半径を物理ベース最適速度に使用:</span><br>
+        v<sub>max</sub> = &radic;(&mu; &times; g &times; R) &times; 3.6 &times; safetyMargin
+      </div>
+      <p style="color:var(--text2); font-size:0.85rem;">3点の座標だけからコーナーの曲率半径を正確に算出。ウェイポイント間隔が不均等でも正しく動作するため、手動配置のウェイポイントに対してロバスト。</p>
     </div>
   </div>
 </section>
