@@ -48,6 +48,7 @@
     font-weight: 900; font-size: 1.2rem; letter-spacing: 3px;
     background: linear-gradient(135deg, var(--accent), var(--orange));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    cursor: pointer; text-decoration: none;
   }
   nav ul { list-style: none; display: flex; gap: 28px; }
   nav a {
@@ -101,6 +102,12 @@
     font-size: 0.85rem;
     font-weight: 600;
     backdrop-filter: blur(4px);
+    text-decoration: none;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .hero .tag:hover {
+    background: rgba(255,77,106,0.25);
+    transform: translateY(-2px);
   }
 
   /* ===== SECTIONS ===== */
@@ -317,6 +324,44 @@
     border-top: 1px solid rgba(255,255,255,0.07);
   }
 
+  /* ===== SCROLL ANIMATIONS ===== */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-in-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  }
+  .fade-in-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .fade-in-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  }
+  .fade-in-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .scale-in {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .scale-in.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
     nav { padding: 0 20px; }
@@ -332,7 +377,7 @@
 
 <!-- NAV -->
 <nav>
-  <div class="logo">VELOCITY</div>
+  <a href="#" class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">VELOCITY</a>
   <ul>
     <li><a href="#about">About</a></li>
     <li><a href="#player">Player</a></li>
@@ -354,11 +399,11 @@
       ABS/TCS/ESC搭載、17台同時走行。本格レーシング体験をUnityで。
     </p>
     <div class="tags">
-      <span class="tag">Simulation Physics</span>
-      <span class="tag">17 Cars on Track</span>
-      <span class="tag">Recording AI</span>
-      <span class="tag">AutoDrive AI</span>
-      <span class="tag">ABS / TCS / ESC</span>
+      <a href="#player" class="tag">Simulation Physics</a>
+      <a href="#about" class="tag">17 Cars on Track</a>
+      <a href="#ai-recording" class="tag">Recording AI</a>
+      <a href="#ai-autodrive" class="tag">AutoDrive AI</a>
+      <a href="#player" class="tag">ABS / TCS / ESC</a>
     </div>
   </div>
 </section>
@@ -1422,9 +1467,45 @@
 
 <!-- FOOTER -->
 <footer>
-  <p>Velocity &mdash; Built with Unity 2022.3 / Photon Fusion</p>
+  <p>Velocity &mdash; Built with Unity 2022.3</p>
   <p style="margin-top:8px; font-size:0.75rem; color:rgba(255,255,255,0.3);">Technical Documentation</p>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Assign animation classes to elements
+  document.querySelectorAll('.section-header').forEach(el => el.classList.add('fade-in'));
+  document.querySelectorAll('.feature-card').forEach((el, i) => {
+    el.classList.add('fade-in');
+    el.style.transitionDelay = `${i * 0.1}s`;
+  });
+  document.querySelectorAll('.detail-block').forEach(el => el.classList.add('fade-in'));
+  document.querySelectorAll('.img-showcase img, .img-full').forEach((el, i) => {
+    el.classList.add('scale-in');
+    el.style.transitionDelay = `${i * 0.1}s`;
+  });
+  document.querySelectorAll('.callout').forEach(el => el.classList.add('fade-in-left'));
+  document.querySelectorAll('.flow').forEach(el => el.classList.add('fade-in'));
+  document.querySelectorAll('.spec-grid').forEach(el => el.classList.add('fade-in'));
+  document.querySelectorAll('.param-table').forEach(el => el.classList.add('fade-in'));
+  document.querySelectorAll('.diagram-img, .diagram-row').forEach(el => el.classList.add('scale-in'));
+  document.querySelectorAll('.controls-table').forEach(el => el.classList.add('fade-in'));
+
+  // Intersection Observer for scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.fade-in, .fade-in-left, .fade-in-right, .scale-in').forEach(el => {
+    observer.observe(el);
+  });
+});
+</script>
 
 </body>
 </html>
