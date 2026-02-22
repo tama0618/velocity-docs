@@ -23,6 +23,30 @@
     --orange: #e68a1e;
   }
 
+  /* Section color themes */
+  #about          { --s-accent: #e8384f; --s-accent2: #ff5a6e; --s-glow: rgba(232,56,79,0.08); }
+  #player         { --s-accent: #2e86de; --s-accent2: #54a0e8; --s-glow: rgba(46,134,222,0.08); }
+  #ai-recording   { --s-accent: #20bf6b; --s-accent2: #3dd68c; --s-glow: rgba(32,191,107,0.08); }
+  #ai-autodrive   { --s-accent: #8854d0; --s-accent2: #a07de0; --s-glow: rgba(136,84,208,0.08); }
+  #systems        { --s-accent: #e67e22; --s-accent2: #f0993e; --s-glow: rgba(230,126,34,0.08); }
+  #controls       { --s-accent: #d4a017; --s-accent2: #e6b830; --s-glow: rgba(212,160,23,0.08); }
+  #gallery        { --s-accent: #e8384f; --s-accent2: #ff5a6e; --s-glow: rgba(232,56,79,0.08); }
+
+  /* Inherit section accent into children */
+  section[id] {
+    --accent: var(--s-accent); --accent2: var(--s-accent2); --accent-glow: var(--s-glow);
+    position: relative;
+  }
+  /* Color transition bar between sections */
+  section[id]::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 3px; border-radius: 3px;
+    background: var(--s-accent);
+    opacity: 0.5;
+  }
+  section.hero::before { display: none; }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
 
@@ -62,11 +86,12 @@
   }
   nav a::after {
     content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
-    height: 2px; background: var(--accent); transform: scaleX(0);
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    height: 2px; background: var(--nav-accent, var(--accent)); transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), background 0.5s;
   }
-  nav a:hover { color: var(--accent); }
+  nav a:hover { color: var(--nav-accent, var(--accent)); }
   nav a:hover::after { transform: scaleX(1); }
+  nav a.nav-active::after { transform: scaleX(1); }
 
   /* ===== HERO ===== */
   .hero {
@@ -162,7 +187,7 @@
   }
   .feature-card:hover {
     transform: translateY(-6px);
-    border-color: rgba(232,56,79,0.2);
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
     box-shadow: 0 16px 48px rgba(0,0,0,0.1);
   }
   .feature-card .icon {
@@ -199,10 +224,10 @@
     font-weight: 700; letter-spacing: 1px;
   }
   .badge-red { background: var(--accent); color: #fff; }
-  .badge-blue { background: var(--blue); color: #0e1218; }
-  .badge-green { background: var(--green); color: #0e1218; }
-  .badge-purple { background: var(--purple); color: #0e1218; }
-  .badge-orange { background: var(--orange); color: #0e1218; }
+  .badge-blue { background: var(--accent); color: #fff; }
+  .badge-green { background: var(--accent); color: #fff; }
+  .badge-purple { background: var(--accent); color: #fff; }
+  .badge-orange { background: var(--accent); color: #fff; }
 
   .detail-block .desc { color: var(--text2); margin-bottom: 28px; font-size: 0.95rem; }
 
@@ -219,7 +244,7 @@
   }
   .spec-item h4 {
     font-size: 0.85rem; font-weight: 700;
-    color: var(--accent2); margin-bottom: 10px;
+    color: var(--accent); margin-bottom: 10px;
     letter-spacing: 0.5px;
   }
   .spec-item p, .spec-item ul { color: var(--text2); font-size: 0.88rem; }
@@ -287,7 +312,7 @@
   .controls-table th {
     background: var(--bg3); padding: 14px 20px;
     font-weight: 700; font-size: 0.9rem; text-align: center;
-    border-bottom: 2px solid var(--accent);
+    border-bottom: 2px solid var(--s-accent, var(--accent));
   }
   .controls-table td {
     padding: 12px 20px; text-align: center;
@@ -307,7 +332,7 @@
     padding: 10px 20px; border-radius: 8px;
     font-size: 0.85rem; font-weight: 600;
   }
-  .flow-arrow { color: var(--accent); font-size: 1.2rem; }
+  .flow-arrow { color: var(--accent); font-size: 1.2rem; transition: color 0.5s; }
 
   /* ===== CODE & FORMULA ===== */
   .code-block {
@@ -325,8 +350,8 @@
   .code-block .str { color: #a5d6ff; }
 
   .formula-box {
-    background: linear-gradient(135deg, rgba(232,56,79,0.05), rgba(58,143,212,0.05));
-    border: 1px solid rgba(232,56,79,0.15);
+    background: var(--accent-glow);
+    border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
     border-radius: 10px;
     padding: 20px 24px; margin: 16px 0;
     font-size: 1.05rem; text-align: center;
@@ -337,7 +362,7 @@
 
   /* ===== HIGHLIGHT CALLOUT ===== */
   .callout {
-    background: linear-gradient(135deg, rgba(232,56,79,0.04), rgba(58,143,212,0.04));
+    background: var(--accent-glow);
     border-left: 4px solid var(--accent);
     border-radius: 0 12px 12px 0;
     padding: 20px 28px; margin: 24px 0;
@@ -1634,21 +1659,48 @@ document.addEventListener('DOMContentLoaded', () => {
     observer.observe(el);
   });
 
-  // === ACTIVE NAV LINK HIGHLIGHT ===
-  const sections = document.querySelectorAll('section[id]');
+  // === SECTION COLOR MAP ===
+  const sectionColors = {
+    'about':        { accent: '#e8384f', accent2: '#ff5a6e' },
+    'player':       { accent: '#2e86de', accent2: '#54a0e8' },
+    'ai-recording': { accent: '#20bf6b', accent2: '#3dd68c' },
+    'ai-autodrive': { accent: '#8854d0', accent2: '#a07de0' },
+    'systems':      { accent: '#e67e22', accent2: '#f0993e' },
+    'controls':     { accent: '#d4a017', accent2: '#e6b830' },
+    'gallery':      { accent: '#e8384f', accent2: '#ff5a6e' },
+  };
+  const navLogo = document.querySelector('nav .logo');
   const navLinks = document.querySelectorAll('nav ul a');
+  const sections = document.querySelectorAll('section[id]');
+  let currentColor = sectionColors['about'];
+
+  // === ACTIVE NAV LINK HIGHLIGHT + COLOR SYNC ===
   const navObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
+        const id = entry.target.id;
+        const colors = sectionColors[id];
+        if (colors) {
+          currentColor = colors;
+          // Update nav logo gradient
+          navLogo.style.background = `linear-gradient(135deg, ${colors.accent}, ${colors.accent2})`;
+          navLogo.style.webkitBackgroundClip = 'text';
+          navLogo.style.webkitTextFillColor = 'transparent';
+          // Update nav underline color
+          nav.style.setProperty('--nav-accent', colors.accent);
+        }
+        // Highlight active link
         navLinks.forEach(link => {
           link.style.color = '';
-          if (link.getAttribute('href') === '#' + entry.target.id) {
-            link.style.color = 'var(--accent)';
+          link.classList.remove('nav-active');
+          if (link.getAttribute('href') === '#' + id) {
+            link.style.color = currentColor.accent;
+            link.classList.add('nav-active');
           }
         });
       }
     });
-  }, { threshold: 0.2, rootMargin: '-64px 0px -50% 0px' });
+  }, { threshold: 0.15, rootMargin: '-64px 0px -40% 0px' });
   sections.forEach(s => navObserver.observe(s));
 });
 </script>
