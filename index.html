@@ -1720,11 +1720,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.param-table').forEach(el => el.classList.add('fade-up'));
   document.querySelectorAll('.diagram-img, .diagram-row').forEach(el => el.classList.add('scale-in'));
   document.querySelectorAll('.controls-table').forEach(el => el.classList.add('fade-up'));
-  document.querySelectorAll('.formula-box').forEach((el, i) => {
-    el.classList.add('fade-in');
-    el.style.transitionDelay = `${i * 0.05}s`;
-  });
-
   // === INTERSECTION OBSERVER ===
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
