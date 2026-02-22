@@ -36,15 +36,6 @@
     --accent: var(--s-accent); --accent2: var(--s-accent2); --accent-glow: var(--s-glow);
     position: relative;
   }
-  /* Color transition bar between sections */
-  section[id]::before {
-    content: '';
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 60px; height: 3px; border-radius: 3px;
-    background: var(--s-accent);
-    opacity: 0.5;
-  }
-  section.hero::before { display: none; }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -177,17 +168,15 @@
     gap: 24px;
   }
   .feature-card {
-    background: var(--bg2);
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 16px;
-    padding: 36px;
-    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s, border-color 0.3s;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-radius: 0;
+    padding: 28px 0;
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
   }
   .feature-card:hover {
-    transform: translateY(-6px);
-    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+    transform: translateX(8px);
   }
   .feature-card .icon {
     width: 50px; height: 50px; border-radius: 13px;
@@ -206,13 +195,11 @@
 
   /* ===== DETAIL BLOCK ===== */
   .detail-block {
-    background: var(--bg2);
-    border: 1px solid rgba(0,0,0,0.06);
-    border-radius: 20px;
-    padding: 48px;
-    margin-bottom: 40px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    padding: 0 0 60px;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
   }
+  .detail-block:last-child { border-bottom: none; }
   .detail-block h3 {
     font-size: 1.5rem; font-weight: 800;
     margin-bottom: 8px;
@@ -222,13 +209,12 @@
     font-size: 0.7rem; padding: 3px 10px; border-radius: 100px;
     font-weight: 700; letter-spacing: 1px;
   }
-  .badge-red { background: var(--accent); color: #fff; }
-  .badge-blue { background: var(--accent); color: #fff; }
-  .badge-green { background: var(--accent); color: #fff; }
-  .badge-purple { background: var(--accent); color: #fff; }
-  .badge-orange { background: var(--accent); color: #fff; }
+  .badge-red, .badge-blue, .badge-green, .badge-purple, .badge-orange {
+    background: var(--accent); color: #fff;
+  }
 
   .detail-block .desc { color: var(--text2); margin-bottom: 28px; font-size: 0.95rem; }
+  .detail-block + .detail-block { padding-top: 60px; }
 
   .spec-grid {
     display: grid;
@@ -236,11 +222,12 @@
     gap: 20px;
   }
   .spec-item {
-    background: var(--bg3);
-    border-radius: 12px;
-    padding: 24px;
-    border: 1px solid rgba(0,0,0,0.04);
+    background: transparent;
+    border-radius: 0;
+    padding: 24px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
   }
+  .spec-grid .spec-item:last-child { border-bottom: none; }
   .spec-item h4 {
     font-size: 0.85rem; font-weight: 700;
     color: var(--accent); margin-bottom: 10px;
@@ -369,61 +356,44 @@
   }
   .callout strong { color: var(--text); }
 
-  /* ===== MARQUEE GALLERY ===== */
-  .marquee-gallery {
-    padding: 80px 0; overflow: hidden;
-    max-width: 100vw; margin: 0 auto;
+  /* ===== FULL-BLEED IMAGE BREAK ===== */
+  .img-break {
+    width: 100vw; position: relative; left: 50%; right: 50%;
+    margin-left: -50vw; margin-right: -50vw;
+    height: 50vh; min-height: 320px;
+    overflow: hidden;
   }
-  .marquee-gallery .section-header {
-    max-width: 1200px; margin: 0 auto 48px; padding: 0 40px;
-  }
-  .marquee-row {
-    display: flex; gap: 20px;
-    width: max-content;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-  }
-  .marquee-row.row-left  { animation-name: marqueeLeft;  animation-duration: 40s; }
-  .marquee-row.row-right { animation-name: marqueeRight; animation-duration: 45s; }
-  .marquee-row:hover { animation-play-state: paused; }
-  @keyframes marqueeLeft  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  @keyframes marqueeRight { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
-
-  .marquee-row .marquee-item {
-    flex-shrink: 0; width: 420px; height: 260px;
-    border-radius: 16px; overflow: hidden; position: relative;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    border: 1px solid rgba(0,0,0,0.06);
-  }
-  .marquee-row .marquee-item img {
+  .img-break img, .img-break video {
     width: 100%; height: 100%; object-fit: cover;
+    display: block;
+    transition: transform 0.1s linear;
+  }
+  .img-break .img-break-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, var(--bg) 0%, transparent 20%, transparent 80%, var(--bg) 100%);
+    pointer-events: none;
+  }
+
+  /* ===== SPLIT LAYOUT ===== */
+  .split {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 60px; align-items: center;
+    margin: 60px 0;
+  }
+  .split.reverse { direction: rtl; }
+  .split.reverse > * { direction: ltr; }
+  .split-img {
+    border-radius: 16px; overflow: hidden;
+  }
+  .split-img img {
+    width: 100%; display: block;
     transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
   }
-  .marquee-row .marquee-item:hover img {
-    transform: scale(1.06);
-  }
-  .marquee-row .marquee-item .marquee-caption {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px 20px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.6));
-    color: #fff; font-size: 0.85rem; font-weight: 600;
-    opacity: 0; transform: translateY(8px);
-    transition: opacity 0.4s, transform 0.4s;
-  }
-  .marquee-row .marquee-item:hover .marquee-caption {
-    opacity: 1; transform: translateY(0);
-  }
-  .marquee-row + .marquee-row { margin-top: 20px; }
-
-  /* Video item */
-  .marquee-item video {
-    width: 100%; height: 100%; object-fit: cover;
-  }
-
+  .split-img:hover img { transform: scale(1.03); }
   @media (max-width: 768px) {
-    .marquee-row .marquee-item { width: 300px; height: 190px; }
-    .marquee-gallery { padding: 50px 0; }
-    .marquee-gallery .section-header { padding: 0 20px; }
+    .split { grid-template-columns: 1fr; gap: 30px; }
+    .split.reverse { direction: ltr; }
+    .img-break { height: 35vh; min-height: 220px; }
   }
 
   /* ===== FOOTER ===== */
@@ -611,11 +581,13 @@
     </div>
   </div>
 
-  <div class="img-showcase">
-    <img src="img/gameplay_chase.png" alt="Chase cam gameplay">
-    <img src="img/racing_action.png" alt="Racing action">
-  </div>
 </section>
+
+<!-- Full-bleed: Chase cam -->
+<div class="img-break">
+  <img src="img/gameplay_chase.png" alt="Chase cam gameplay" class="parallax-img">
+  <div class="img-break-overlay"></div>
+</div>
 
 <!-- PLAYER CAR -->
 <section id="player">
@@ -847,6 +819,12 @@
   </div>
 </section>
 
+<!-- Full-bleed: Cockpit -->
+<div class="img-break">
+  <img src="img/cockpit_view.png" alt="Cockpit view" class="parallax-img">
+  <div class="img-break-overlay"></div>
+</div>
+
 <!-- RECORDING AI -->
 <section id="ai-recording">
   <div class="section-header">
@@ -855,9 +833,9 @@
     <p>RecordingCPUController.cs (~2,700行) - プレイヤーの走行データを基盤に、リアルタイム補正で自律走行するAI</p>
   </div>
 
-  <div class="img-showcase">
-    <img src="img/editor_cars1.png" alt="AI cars on track">
-    <img src="img/editor_cars2.png" alt="AI cars S-curve">
+  <div class="split">
+    <div class="split-img"><img src="img/editor_cars1.png" alt="AI cars on track"></div>
+    <div class="split-img"><img src="img/editor_cars2.png" alt="AI cars S-curve"></div>
   </div>
 
   <!-- Data Pipeline -->
@@ -1326,6 +1304,12 @@
   </div>
 </section>
 
+<!-- Full-bleed: Racing action -->
+<div class="img-break">
+  <img src="img/racing_action.png" alt="Racing action" class="parallax-img">
+  <div class="img-break-overlay"></div>
+</div>
+
 <!-- AUTODRIVE AI -->
 <section id="ai-autodrive">
   <div class="section-header">
@@ -1547,6 +1531,12 @@
   </div>
 </section>
 
+<!-- Full-bleed: Pitlane -->
+<div class="img-break">
+  <img src="img/pitlane.png" alt="Pit lane" class="parallax-img">
+  <div class="img-break-overlay"></div>
+</div>
+
 <!-- RACE SYSTEMS -->
 <section id="systems">
   <div class="section-header">
@@ -1587,6 +1577,12 @@
   </div>
 </section>
 
+<!-- Full-bleed: Front view -->
+<div class="img-break">
+  <img src="img/frontview.png" alt="Front view" class="parallax-img">
+  <div class="img-break-overlay"></div>
+</div>
+
 <!-- CONTROLS -->
 <section id="controls">
   <div class="section-header">
@@ -1610,46 +1606,12 @@
   </div>
 </section>
 
-<!-- MARQUEE GALLERY (between Controls and Footer) -->
-<div class="marquee-gallery" id="gallery">
-  <div class="section-header">
-    <div class="label">Gallery</div>
-    <h2>ギャラリー</h2>
-  </div>
-
-  <!-- Row 1: left scroll -->
-  <div class="marquee-row row-left">
-    <div class="marquee-item"><img src="img/track_aerial.png" alt="Track aerial"><div class="marquee-caption">コース全景</div></div>
-    <div class="marquee-item"><img src="img/gameplay_chase.png" alt="Chase cam"><div class="marquee-caption">チェイスカメラ</div></div>
-    <div class="marquee-item"><img src="img/cockpit_view.png" alt="Cockpit"><div class="marquee-caption">コックピットビュー</div></div>
-    <div class="marquee-item"><img src="img/racing_action.png" alt="Racing"><div class="marquee-caption">レーシングアクション</div></div>
-    <div class="marquee-item"><img src="img/gameplay2.png" alt="Gameplay 2"><div class="marquee-caption">ゲームプレイ</div></div>
-    <div class="marquee-item"><img src="img/editor_cars1.png" alt="AI cars"><div class="marquee-caption">AI車両群</div></div>
-    <!-- duplicate for seamless loop -->
-    <div class="marquee-item"><img src="img/track_aerial.png" alt="Track aerial"><div class="marquee-caption">コース全景</div></div>
-    <div class="marquee-item"><img src="img/gameplay_chase.png" alt="Chase cam"><div class="marquee-caption">チェイスカメラ</div></div>
-    <div class="marquee-item"><img src="img/cockpit_view.png" alt="Cockpit"><div class="marquee-caption">コックピットビュー</div></div>
-    <div class="marquee-item"><img src="img/racing_action.png" alt="Racing"><div class="marquee-caption">レーシングアクション</div></div>
-    <div class="marquee-item"><img src="img/gameplay2.png" alt="Gameplay 2"><div class="marquee-caption">ゲームプレイ</div></div>
-    <div class="marquee-item"><img src="img/editor_cars1.png" alt="AI cars"><div class="marquee-caption">AI車両群</div></div>
-  </div>
-
-  <!-- Row 2: right scroll -->
-  <div class="marquee-row row-right">
-    <div class="marquee-item"><img src="img/pitlane.png" alt="Pit lane"><div class="marquee-caption">ピットレーン</div></div>
-    <div class="marquee-item"><img src="img/frontview.png" alt="Front view"><div class="marquee-caption">フロントビュー</div></div>
-    <div class="marquee-item"><img src="img/gameplay3.png" alt="Gameplay 3"><div class="marquee-caption">バトルシーン</div></div>
-    <div class="marquee-item"><img src="img/early_build.png" alt="Early build"><div class="marquee-caption">開発初期</div></div>
-    <div class="marquee-item"><img src="img/editor_cars2.png" alt="S-curve"><div class="marquee-caption">S字コーナー</div></div>
-    <div class="marquee-item"><video autoplay muted loop playsinline><source src="img/gameplay.mp4" type="video/mp4"></video><div class="marquee-caption">プレイ映像</div></div>
-    <!-- duplicate for seamless loop -->
-    <div class="marquee-item"><img src="img/pitlane.png" alt="Pit lane"><div class="marquee-caption">ピットレーン</div></div>
-    <div class="marquee-item"><img src="img/frontview.png" alt="Front view"><div class="marquee-caption">フロントビュー</div></div>
-    <div class="marquee-item"><img src="img/gameplay3.png" alt="Gameplay 3"><div class="marquee-caption">バトルシーン</div></div>
-    <div class="marquee-item"><img src="img/early_build.png" alt="Early build"><div class="marquee-caption">開発初期</div></div>
-    <div class="marquee-item"><img src="img/editor_cars2.png" alt="S-curve"><div class="marquee-caption">S字コーナー</div></div>
-    <div class="marquee-item"><video autoplay muted loop playsinline><source src="img/gameplay.mp4" type="video/mp4"></video><div class="marquee-caption">プレイ映像</div></div>
-  </div>
+<!-- Full-bleed: Gameplay video -->
+<div class="img-break">
+  <video autoplay muted loop playsinline>
+    <source src="img/gameplay.mp4" type="video/mp4">
+  </video>
+  <div class="img-break-overlay"></div>
 </div>
 
 <!-- FOOTER -->
@@ -1676,16 +1638,24 @@ document.addEventListener('DOMContentLoaded', () => {
     nav.classList.toggle('scrolled', window.scrollY > 40);
   }, { passive: true });
 
-  // === HERO PARALLAX ===
+  // === PARALLAX (Hero + full-bleed images) ===
   const heroBg = document.querySelector('.hero-bg');
-  if (heroBg) {
-    window.addEventListener('scroll', () => {
-      const y = window.scrollY;
-      if (y < window.innerHeight) {
-        heroBg.style.transform = `scale(1.1) translateY(${y * 0.3}px)`;
+  const parallaxImgs = document.querySelectorAll('.parallax-img');
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    // Hero parallax
+    if (heroBg && y < window.innerHeight) {
+      heroBg.style.transform = `scale(1.1) translateY(${y * 0.3}px)`;
+    }
+    // Full-bleed image parallax
+    parallaxImgs.forEach(img => {
+      const rect = img.parentElement.getBoundingClientRect();
+      if (rect.bottom > 0 && rect.top < window.innerHeight) {
+        const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+        img.style.transform = `scale(1.15) translateY(${(progress - 0.5) * -60}px)`;
       }
-    }, { passive: true });
-  }
+    });
+  }, { passive: true });
 
   // === ASSIGN ANIMATION CLASSES ===
   // Section headers get fade-up with line reveal
@@ -1702,9 +1672,9 @@ document.addEventListener('DOMContentLoaded', () => {
     el.style.transitionDelay = `${i * 0.12}s`;
   });
 
-  // Detail blocks: alternating left/right
-  document.querySelectorAll('.detail-block').forEach((el, i) => {
-    el.classList.add(i % 2 === 0 ? 'fade-in-left' : 'fade-in-right');
+  // Detail blocks: fade up
+  document.querySelectorAll('.detail-block').forEach(el => {
+    el.classList.add('fade-up');
   });
 
   // Images: scale-in with stagger
@@ -1720,6 +1690,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.param-table').forEach(el => el.classList.add('fade-up'));
   document.querySelectorAll('.diagram-img, .diagram-row').forEach(el => el.classList.add('scale-in'));
   document.querySelectorAll('.controls-table').forEach(el => el.classList.add('fade-up'));
+  document.querySelectorAll('.split-img').forEach((el, i) => {
+    el.classList.add(i % 2 === 0 ? 'fade-in-left' : 'fade-in-right');
+  });
+  document.querySelectorAll('.img-break').forEach(el => el.classList.add('fade-in'));
   // === INTERSECTION OBSERVER ===
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
