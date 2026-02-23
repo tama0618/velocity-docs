@@ -1996,6 +1996,9 @@ if (iAmLower || isSideBySide)
     <p>AutoDriveController.cs (~2,400行) - Catmull-Romスプラインとレイキャストで自律走行するAI</p>
   </div>
 
+  <img src="img/waypoint_gizmos.png" alt="Unityエディタ上のウェイポイントギズモ表示" class="diagram-img" style="border-radius:10px; margin:0 0 24px;">
+  <p style="color:var(--text2); font-size:0.82rem; text-align:center; margin-top:-16px; margin-bottom:24px;">Unityエディタ上のウェイポイントギズモ。各色のラインがCatmull-Romスプラインで補間されたレーシングラインを表し、AI車両はこのラインに沿って走行する。</p>
+
   <!-- Spline & Racing Line -->
   <div class="detail-block">
     <h3>&#128204; レーシングライン生成 <span class="badge badge-purple">SPLINE</span></h3>
@@ -3071,6 +3074,9 @@ if (isOnDirt)
   <div class="detail-block">
     <h3>&#128680; 縁石パルス振動 <span class="badge badge-green">SURFACE</span></h3>
     <p class="desc">コース端の縁石（ゼブラゾーン）を通過するときの等間隔バンプ感。Sin波パルスで振動周波数が速度に連動する。</p>
+
+    <img src="img/zebra_curb.png" alt="縁石（ゼブラゾーン）の実際の走行シーン" class="diagram-img" style="border-radius:10px; margin:16px 0;">
+    <p style="color:var(--text2); font-size:0.82rem; text-align:center; margin-top:-8px;">実際のゲーム画面: コース端の赤白緑の縁石（ゼブラゾーン）。WheelColliderが「zebra」タグのコライダーを検出すると振動が発生する。</p>
 
     <div class="callout">
       <strong>Dev Note:</strong> 実車の縁石は等間隔に配置された凸凹。低速で乗ると「ゴトゴト」、高速で乗ると「ブブブブ」と振動の質が変わる。この物理現象を<code>Sin(time * freq * PI)</code>のパルス周波数変化で再現。
