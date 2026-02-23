@@ -30,6 +30,7 @@
   #ai-autodrive   { --s-accent: #8854d0; --s-accent2: #a07de0; --s-glow: rgba(136,84,208,0.08); }
   #systems        { --s-accent: #e67e22; --s-accent2: #f0993e; --s-glow: rgba(230,126,34,0.08); }
   #controls       { --s-accent: #d4a017; --s-accent2: #e6b830; --s-glow: rgba(212,160,23,0.08); }
+  #haptics        { --s-accent: #e84393; --s-accent2: #fd79a8; --s-glow: rgba(232,67,147,0.08); }
   #audio          { --s-accent: #00acc1; --s-accent2: #26c6da; --s-glow: rgba(0,172,193,0.08); }
 
   /* Inherit section accent into children */
@@ -749,6 +750,7 @@
     <li><a href="#audio">Audio</a></li>
     <li><a href="#systems">Systems</a></li>
     <li><a href="#controls">Controls</a></li>
+    <li><a href="#haptics">Haptics</a></li>
   </ul>
 </nav>
 
@@ -811,6 +813,15 @@
   <a href="#controls" data-section="controls"><span class="dot-tip">Controls</span>
     <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
       <span data-index="0" style="--i:0">キーバインド一覧</span>
+    </div></div>
+  </a>
+  <a href="#haptics" data-section="haptics"><span class="dot-tip">Haptics</span>
+    <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
+      <span data-index="0" style="--i:0">デュアルモーターアーキテクチャ</span>
+      <span data-index="1" style="--i:1">ダート路面振動</span>
+      <span data-index="2" style="--i:2">縁石パルス振動</span>
+      <span data-index="3" style="--i:3">衝突インパクト</span>
+      <span data-index="4" style="--i:4">タイヤスリップ振動</span>
     </div></div>
   </a>
 </div>
@@ -2681,6 +2692,140 @@
   </div>
 </section>
 
+<!-- ==================== HAPTICS ==================== -->
+<section id="haptics">
+  <div class="section-header">
+    <div class="label">Haptics</div>
+    <h2>コントローラー振動</h2>
+    <p>Unity Input Systemのデュアルモーター制御による4種類のリアルタイム振動フィードバック</p>
+  </div>
+
+  <div class="detail-block">
+    <h3>&#128297; デュアルモーターアーキテクチャ <span class="badge badge-red">CORE</span></h3>
+    <p class="desc">低周波モーター（重い振動）と高周波モーター（細かいバズ）を独立制御。全トリガーの振動を加算合成し、毎フレーム<code>Gamepad.current.SetMotorSpeeds(low, high)</code>で出力する設計。</p>
+
+    <div class="callout">
+      <strong>Dev Note:</strong> ダート路面を走りながらタイヤがスリップすると、路面の重い低周波振動にスリップのバズが自然に重なる。単一トリガーでは表現できない複合的な触覚体験を加算式で実現。デッドゾーン処理で0.05未満の微振動をカットし、コントローラーの常時バズを防止している。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>出力モデル</h4>
+        <p>毎<code>FixedUpdate</code>で4トリガー（ダート・縁石・衝突・スリップ）それぞれの<code>lowMotor</code>/<code>highMotor</code>寄与を計算し、合算。最終値を<code>Mathf.Clamp01</code>で0〜1に制限してからモーターへ出力する。各トリガーは独立した強度比率を持ち、低周波と高周波のバランスがトリガーごとに異なる。</p>
+      </div>
+      <div class="spec-item">
+        <h4>デッドゾーン処理</h4>
+        <p>合算後の<code>lowMotor</code>/<code>highMotor</code>が0.05未満の場合は0に切り捨て。微小な振動が常時発生してコントローラーが微震え続ける問題を防止。閾値はSerializeFieldで調整可能。</p>
+      </div>
+      <div class="spec-item">
+        <h4>設定パラメータ</h4>
+        <p><code>hapticsEnabled</code>フラグで振動全体をON/OFF。各トリガーの強度（<code>collisionRumbleScale</code>, <code>dirtRumbleLow/High</code>, <code>zebraRumble</code>, <code>gripRumbleIntensity</code>）はInspectorから個別調整可能。タグ名（<code>dirtTag</code>, <code>zebraTag</code>）もSerializeFieldで変更可能。</p>
+      </div>
+      <div class="spec-item">
+        <h4>ライフサイクル管理</h4>
+        <p><code>OnDisable()</code>で<code>SetMotorSpeeds(0, 0)</code>を呼び出し、車がDestroy/無効化されたときにモーターを確実に停止。ゲームパッド未接続時（<code>Gamepad.current == null</code>）は振動処理をスキップし、路面オーディオの更新だけを実行する。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-block">
+    <h3>&#127967; ダート路面振動 <span class="badge badge-blue">SURFACE</span></h3>
+    <p class="desc">WheelColliderの接地判定でダート路面を検出し、速度に比例した連続振動を生成。砂利道を走る重厚なフィードバック。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>路面検出</h4>
+        <p>4輪すべての<code>WheelCollider.GetGroundHit(out hit)</code>を毎フレームチェック。<code>hit.collider.CompareTag(dirtTag)</code>が1輪でもtrueなら<code>isOnDirt = true</code>。タグ名はデフォルト"Dirt"でSerializeFieldから変更可能。</p>
+      </div>
+      <div class="spec-item">
+        <h4>速度スケーリング</h4>
+        <p><code>Mathf.Clamp01(speedMS / 30f)</code>で現在速度を0〜1に正規化。停車時は振動ゼロ、30 m/s（108 km/h）で最大強度。低速走行ではわずかな振動、速度が上がるにつれ砂利の粒が激しく跳ねる感覚を再現。</p>
+      </div>
+      <div class="spec-item">
+        <h4>モーター比率</h4>
+        <p>低周波モーター: <code>dirtRumbleLow</code>（デフォルト1.0）× 速度スケール。高周波モーター: <code>dirtRumbleHigh</code>（デフォルト0.9）× 速度スケール。低周波をやや強めにすることで「重い地面」の感覚を表現。高速ダートでは両モーターがほぼフル稼働。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-block">
+    <h3>&#128680; 縁石パルス振動 <span class="badge badge-green">SURFACE</span></h3>
+    <p class="desc">コース端の縁石（ゼブラゾーン）を通過するときの等間隔バンプ感。Sin波パルスで振動周波数が速度に連動する。</p>
+
+    <div class="callout">
+      <strong>Dev Note:</strong> 実車の縁石は等間隔に配置された凸凹。低速で乗ると「ゴトゴト」、高速で乗ると「ブブブブ」と振動の質が変わる。この物理現象を<code>Sin(time * freq * PI)</code>のパルス周波数変化で再現。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>路面検出</h4>
+        <p>ダート同様、4輪の<code>GetGroundHit</code>で<code>zebraTag</code>（デフォルト"Zebra"）を判定。1輪でも縁石に乗っていれば<code>isOnZebra = true</code>。</p>
+      </div>
+      <div class="spec-item">
+        <h4>パルス周波数</h4>
+        <p><code>Mathf.Lerp(8f, 45f, Clamp01(speedMS / 30f))</code>で速度に応じて8Hz〜45Hzに変化。低速で8Hz（1秒に8回の振動）、高速で45Hz（1秒に45回）。人間が「個別のバンプ」として感じる限界付近の周波数帯を使用。</p>
+      </div>
+      <div class="spec-item">
+        <h4>Sin波振動</h4>
+        <p><code>Mathf.Abs(Mathf.Sin(Time.time * zebraFreq * Mathf.PI))</code>で0〜1を繰り返すパルスを生成。Absで常に正の値にし、滑らかな「乗り上げ→離脱」サイクルを作る。速度スケール<code>Clamp01(speedMS / 20f)</code>を掛けて低速時の振動を抑制。</p>
+      </div>
+      <div class="spec-item">
+        <h4>モーター比率</h4>
+        <p>低周波: <code>zebraRumble * 0.5 * pulse * speedScale</code>。高周波: <code>zebraRumble * pulse * speedScale</code>。高周波を低周波の2倍にすることで「硬い凸凹を叩く」鋭いバズ感を強調。<code>zebraRumble</code>デフォルト0.8。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-block">
+    <h3>&#128165; 衝突インパクト <span class="badge badge-red">COLLISION</span></h3>
+    <p class="desc"><code>OnCollisionEnter</code>で壁やオブジェクトとの衝突を検知。衝撃力に比例した強烈な振動を一定時間かけて減衰させる。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>衝撃力の算出</h4>
+        <p><code>collision.impulse.magnitude / Mathf.Max(Time.fixedDeltaTime, 0.001f)</code>で衝撃力を取得。物理エンジンが返すインパルス（力積）をフレーム時間で割って瞬間的な力に変換。車体質量（<code>rb.mass</code>、デフォルト1500kg）で正規化し、<code>collisionRumbleScale</code>（デフォルト0.8）を掛けてClamp01。</p>
+      </div>
+      <div class="spec-item">
+        <h4>最低強度保証</h4>
+        <p><code>Mathf.Max(intensity, 0.9f)</code>で算出値が0.9未満でも90%に引き上げ。低速での軽い接触でもプレイヤーに「ぶつかった」と明確に伝わる設計。壁への擦り接触と正面衝突の強度差は残しつつ、最低ラインを保証。</p>
+      </div>
+      <div class="spec-item">
+        <h4>線形減衰</h4>
+        <p><code>collisionRumbleTimer</code>を<code>collisionRumbleDuration</code>（デフォルト0.4秒）から0へ毎フレーム減算。<code>fade = Clamp01(timer / duration)</code>を強度に掛けることで、衝突直後が最大→0.4秒後にゼロへ滑らかに減衰。低周波・高周波ともに<code>intensity * fade * 1.0</code>で均等に出力。</p>
+      </div>
+      <div class="spec-item">
+        <h4>衝突の上書き判定</h4>
+        <p>既に振動中に新たな衝突が発生した場合、<code>intensity > collisionRumbleIntensity * (timer / duration)</code>で「現在の残留振動より強いか」を比較。強い場合のみタイマーと強度を更新。連続衝突で弱い衝撃に上書きされることを防止。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-block">
+    <h3>&#128168; タイヤスリップ振動 <span class="badge badge-purple">GRIP</span></h3>
+    <p class="desc">タイヤのグリップ使用率を監視し、限界を超えたスライド時にバズ寄りの振動フィードバック。ドリフトやロックアップを手で感じ取れる。</p>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>グリップ使用率の算出</h4>
+        <p>各輪の<code>WheelHit</code>から前後スリップ<code>forwardSlip</code>と横スリップ<code>sidewaysSlip</code>を取得。それぞれを摩擦カーブの<code>asymptoteSlip</code>で正規化し、4輪中の最大値を<code>maxGripUsage</code>として採用。1.0が摩擦曲線のピーク、それ以上はグリップ喪失。</p>
+      </div>
+      <div class="spec-item">
+        <h4>スムージング</h4>
+        <p><code>currentGripUsage = Mathf.Lerp(currentGripUsage, maxGripUsage, Time.fixedDeltaTime * 12f)</code>で急激な変動を抑制。12倍のレートで約0.08秒の時定数。タイヤが瞬間的にスリップしても振動がチカチカせず、グリップ回復も滑らかにフェード。値はClampせず1.0超の極端なスライドも追従。</p>
+      </div>
+      <div class="spec-item">
+        <h4>閾値判定</h4>
+        <p><code>skidGripThreshold</code>（デフォルト5.0）を超えたときのみ振動発生。<code>InverseLerp(skidGripThreshold, 4.0, currentGripUsage)</code>で閾値からのフェードインを算出。通常走行では絶対に振動せず、激しいスライドでのみ作動する設計。閾値が高いほどトリガーが厳しくなる。</p>
+      </div>
+      <div class="spec-item">
+        <h4>モーター比率</h4>
+        <p>低周波: <code>gripRumbleIntensity * gripFade * 0.5</code>。高周波: <code>gripRumbleIntensity * gripFade * 0.8</code>。<code>gripRumbleIntensity</code>デフォルト0.4。高周波が低周波の1.6倍で、タイヤが路面を「擦る」ザラついたバズ感を強調。ダートの重い振動とは対照的な質感。</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
 <!-- Full-bleed: Gameplay video -->
 <div class="img-break">
   <video autoplay muted loop playsinline>
@@ -2776,6 +2921,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'audio':        { accent: '#00acc1', accent2: '#26c6da' },
     'systems':      { accent: '#e67e22', accent2: '#f0993e' },
     'controls':     { accent: '#d4a017', accent2: '#e6b830' },
+    'haptics':      { accent: '#e84393', accent2: '#fd79a8' },
   };
 
   document.querySelectorAll('.split-img').forEach((el, i) => {
