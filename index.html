@@ -604,6 +604,86 @@
   #progress-dots a:hover .dot-tip {
     opacity: 1;
   }
+  /* === BRANCH SUB-TOPICS === */
+  #progress-dots a.dot-active { z-index: 2; }
+  #progress-dots a.dot-active .dot-tip { display: none; }
+  .dot-branches {
+    position: absolute;
+    left: 18px;
+    top: 0;
+    display: flex;
+    align-items: flex-start;
+    pointer-events: none;
+  }
+  #progress-dots a.dot-active .dot-branches { pointer-events: auto; }
+  .dot-branches .branch-line {
+    width: 12px;
+    height: 1px;
+    margin-top: 7px;
+    background: var(--active-accent, #c0c4d0);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.2s ease 0.08s;
+    flex-shrink: 0;
+  }
+  #progress-dots a.dot-active .branch-line {
+    transform: scaleX(1);
+    transition: transform 0.3s ease;
+  }
+  .dot-branches .branch-items {
+    display: flex;
+    flex-direction: column;
+  }
+  .branch-items span {
+    position: relative;
+    padding: 2.5px 0 2.5px 14px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: #8a90a4;
+    white-space: nowrap;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.15s ease, transform 0.15s ease, color 0.2s;
+  }
+  #progress-dots a.dot-active .branch-items span {
+    opacity: 0.55;
+    transform: translateX(0);
+    transition: opacity 0.22s ease calc(0.2s + var(--i,0) * 0.05s),
+                transform 0.22s ease calc(0.2s + var(--i,0) * 0.05s),
+                color 0.2s;
+  }
+  .branch-items span::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: #d0d3dc;
+  }
+  .branch-items span:first-child::before { top: 50%; }
+  .branch-items span:last-child::before { bottom: 50%; }
+  .branch-items span:only-child::before { display: none; }
+  .branch-items span::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    width: 8px; height: 1px;
+    background: #d0d3dc;
+  }
+  .branch-items span.sub-active {
+    opacity: 1 !important;
+    color: var(--active-accent, #e8384f);
+    font-weight: 700;
+  }
+  .branch-items span.sub-active::before,
+  .branch-items span.sub-active::after {
+    background: var(--active-accent, #e8384f);
+    opacity: 0.5;
+  }
+  .branch-items span:hover {
+    opacity: 0.85 !important;
+    color: var(--active-accent, #e8384f);
+  }
   @media (max-width: 1100px) {
     #progress-dots { display: none; }
   }
@@ -634,11 +714,55 @@
 <!-- PROGRESS DOTS -->
 <div id="progress-dots">
   <a href="#about" data-section="about"><span class="dot-tip">About</span></a>
-  <a href="#player" data-section="player"><span class="dot-tip">Player</span></a>
-  <a href="#ai-recording" data-section="ai-recording"><span class="dot-tip">AI: Recording</span></a>
-  <a href="#ai-autodrive" data-section="ai-autodrive"><span class="dot-tip">AI: AutoDrive</span></a>
-  <a href="#audio" data-section="audio"><span class="dot-tip">Audio</span></a>
-  <a href="#systems" data-section="systems"><span class="dot-tip">Systems</span></a>
+  <a href="#player" data-section="player"><span class="dot-tip">Player</span>
+    <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
+      <span data-index="0" style="--i:0">エンジン＆トランスミッション</span>
+      <span data-index="1" style="--i:1">タイヤ摩擦モデル</span>
+      <span data-index="2" style="--i:2">安全制御システム</span>
+      <span data-index="3" style="--i:3">ステアリング＆ゴースト</span>
+      <span data-index="4" style="--i:4">高度タイヤ物理</span>
+      <span data-index="5" style="--i:5">CarBodyKit</span>
+    </div></div>
+  </a>
+  <a href="#ai-recording" data-section="ai-recording"><span class="dot-tip">AI: Recording</span>
+    <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
+      <span data-index="0" style="--i:0">データパイプライン</span>
+      <span data-index="1" style="--i:1">ルックアヘッド</span>
+      <span data-index="2" style="--i:2">ステアリング</span>
+      <span data-index="3" style="--i:3">ブレーキング制御</span>
+      <span data-index="4" style="--i:4">速度制御</span>
+      <span data-index="5" style="--i:5">車線変更＆回避</span>
+      <span data-index="6" style="--i:6">順位ブースト</span>
+      <span data-index="7" style="--i:7">ゴースト＆リカバリー</span>
+      <span data-index="8" style="--i:8">サイドバイサイド</span>
+      <span data-index="9" style="--i:9">タイヤ物理</span>
+    </div></div>
+  </a>
+  <a href="#ai-autodrive" data-section="ai-autodrive"><span class="dot-tip">AI: AutoDrive</span>
+    <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
+      <span data-index="0" style="--i:0">レーシングライン生成</span>
+      <span data-index="1" style="--i:1">ステアリング制御</span>
+      <span data-index="2" style="--i:2">速度制御＆ブレーキ</span>
+      <span data-index="3" style="--i:3">障害物回避＆リカバリー</span>
+      <span data-index="4" style="--i:4">適応学習＆パーソナリティ</span>
+    </div></div>
+  </a>
+  <a href="#audio" data-section="audio"><span class="dot-tip">Audio</span>
+    <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
+      <span data-index="0" style="--i:0">F20Cエンジン</span>
+      <span data-index="1" style="--i:1">EJ257ボクサー＆ターボ</span>
+      <span data-index="2" style="--i:2">衝突サウンド</span>
+    </div></div>
+  </a>
+  <a href="#systems" data-section="systems"><span class="dot-tip">Systems</span>
+    <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
+      <span data-index="0" style="--i:0">レースカウントダウン</span>
+      <span data-index="1" style="--i:1">順位管理</span>
+      <span data-index="2" style="--i:2">ラップレコーダー</span>
+      <span data-index="3" style="--i:3">カメラシステム</span>
+      <span data-index="4" style="--i:4">HUD＆スポーン</span>
+    </div></div>
+  </a>
   <a href="#controls" data-section="controls"><span class="dot-tip">Controls</span></a>
 </div>
 
@@ -2686,10 +2810,53 @@ document.addEventListener('DOMContentLoaded', () => {
         dotLinks.forEach(dot => {
           dot.classList.toggle('dot-active', dot.dataset.section === id);
         });
+        // Clear sub-active on section change
+        progressDots.querySelectorAll('.sub-active').forEach(s => s.classList.remove('sub-active'));
       }
     });
   }, { threshold: 0, rootMargin: '-64px 0px -50% 0px' });
   sections.forEach(s => navObserver.observe(s));
+
+  // === SUB-TOPIC BRANCH TRACKING ===
+  const subTopicMap = {};
+  sections.forEach(section => {
+    const h3s = section.querySelectorAll('.detail-block h3');
+    if (h3s.length) subTopicMap[section.id] = Array.from(h3s);
+  });
+
+  const subObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const h3 = entry.target;
+      const section = h3.closest('section[id]');
+      if (!section) return;
+      const dot = progressDots.querySelector(`a[data-section="${section.id}"]`);
+      if (!dot) return;
+      const h3s = subTopicMap[section.id];
+      if (!h3s) return;
+      const idx = h3s.indexOf(h3);
+      dot.querySelectorAll('.branch-items span').forEach((item, i) => {
+        item.classList.toggle('sub-active', i === idx);
+      });
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -70% 0px' });
+
+  Object.values(subTopicMap).flat().forEach(h3 => subObserver.observe(h3));
+
+  // Branch label click → scroll to h3
+  progressDots.querySelectorAll('.branch-items span').forEach(span => {
+    span.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const sectionId = span.closest('a').dataset.section;
+      const idx = parseInt(span.dataset.index);
+      const h3s = subTopicMap[sectionId];
+      if (h3s && h3s[idx]) {
+        const y = h3s[idx].getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    });
+  });
 
   // === FLOATING PARTICLES ===
   const canvas = document.getElementById('particles');
