@@ -580,7 +580,7 @@
     background: var(--active-accent, #e8384f);
     box-shadow: 0 0 10px var(--active-accent, #e8384f), 0 0 20px color-mix(in srgb, var(--active-accent, #e8384f) 30%, transparent);
     transform: scale(1.25);
-    animation: dot-pulse-enter 0.4s ease-out;
+    animation: dot-pulse-enter 0.7s ease-out;
   }
   @keyframes dot-pulse-enter {
     0%   { transform: scale(0.5); box-shadow: 0 0 0 transparent; }
@@ -2878,8 +2878,8 @@ document.addEventListener('DOMContentLoaded', () => {
           progressDots.classList.remove('zoomed');
           zoomTimer = setTimeout(() => {
             switchDot();
-            zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 400);
-          }, 300);
+            zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 700);
+          }, 450);
         }
       }
     });
