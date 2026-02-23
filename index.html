@@ -534,7 +534,7 @@
     align-items: center;
     gap: 0;
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease, left 0.3s ease;
     pointer-events: none;
   }
   #progress-dots.visible {
@@ -580,6 +580,12 @@
     background: var(--active-accent, #e8384f);
     box-shadow: 0 0 10px var(--active-accent, #e8384f), 0 0 20px color-mix(in srgb, var(--active-accent, #e8384f) 30%, transparent);
     transform: scale(1.25);
+    animation: dot-pulse-enter 0.4s ease-out;
+  }
+  @keyframes dot-pulse-enter {
+    0%   { transform: scale(0.5); box-shadow: 0 0 0 transparent; }
+    50%  { transform: scale(2.2); box-shadow: 0 0 25px var(--active-accent, #e8384f), 0 0 50px color-mix(in srgb, var(--active-accent, #e8384f) 50%, transparent); }
+    100% { transform: scale(1.25); box-shadow: 0 0 10px var(--active-accent, #e8384f), 0 0 20px color-mix(in srgb, var(--active-accent, #e8384f) 30%, transparent); }
   }
   /* Hover */
   #progress-dots a:hover::after {
@@ -647,14 +653,14 @@
     cursor: pointer;
     opacity: 0;
     transform: translateX(-6px);
-    transition: opacity 0.15s ease, transform 0.15s ease, color 0.2s;
+    transition: opacity 0.15s ease, transform 0.15s ease, color 0.2s, padding-left 0.3s ease;
   }
   #progress-dots a.dot-active .branch-items span {
     opacity: 0.55;
     transform: translateX(0);
     transition: opacity 0.22s ease calc(0.2s + var(--i,0) * 0.05s),
                 transform 0.22s ease calc(0.2s + var(--i,0) * 0.05s),
-                color 0.2s;
+                color 0.2s, padding-left 0.3s ease;
   }
   .branch-items span::before {
     content: '';
@@ -662,6 +668,7 @@
     left: 0; top: 0; bottom: 0;
     width: 1px;
     background: #d0d3dc;
+    transition: opacity 0.2s, width 0.2s;
   }
   .branch-items span:first-child::before { top: 50%; }
   .branch-items span:last-child::before { bottom: 50%; }
@@ -672,6 +679,7 @@
     left: 0; top: 50%;
     width: 8px; height: 1px;
     background: #d0d3dc;
+    transition: opacity 0.2s, width 0.2s;
   }
   .branch-items span.sub-active {
     opacity: 1 !important;
@@ -688,6 +696,9 @@
     color: var(--active-accent, #e8384f);
   }
   /* === ZOOM EFFECT === */
+  #progress-dots.zoomed {
+    left: 10px;
+  }
   #progress-dots.zoomed a:not(.dot-active) {
     opacity: 0;
     pointer-events: none;
@@ -703,6 +714,14 @@
     left: 0;
   }
   #progress-dots.zoomed a.dot-active .branch-line {
+    opacity: 0;
+    width: 0;
+  }
+  #progress-dots.zoomed .branch-items span {
+    padding-left: 0;
+  }
+  #progress-dots.zoomed .branch-items span::before,
+  #progress-dots.zoomed .branch-items span::after {
     opacity: 0;
     width: 0;
   }
@@ -2841,7 +2860,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSectionId = id;
         clearTimeout(zoomTimer);
 
-        const applyDot = () => {
+        const switchDot = () => {
           if (colors) {
             currentColor = colors;
             document.documentElement.style.setProperty('--active-accent', colors.accent);
@@ -2850,14 +2869,17 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           dotLinks.forEach(dot => dot.classList.toggle('dot-active', dot.dataset.section === id));
           progressDots.querySelectorAll('.sub-active').forEach(s => s.classList.remove('sub-active'));
-          requestAnimationFrame(() => progressDots.classList.add('zoomed'));
         };
 
         if (isFirst) {
-          applyDot();
+          switchDot();
+          requestAnimationFrame(() => progressDots.classList.add('zoomed'));
         } else {
           progressDots.classList.remove('zoomed');
-          zoomTimer = setTimeout(applyDot, 350);
+          zoomTimer = setTimeout(() => {
+            switchDot();
+            zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 400);
+          }, 300);
         }
       }
     });
