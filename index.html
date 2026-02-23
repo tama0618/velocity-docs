@@ -800,8 +800,7 @@
   <a href="#audio" data-section="audio"><span class="dot-tip">Audio</span>
     <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
       <span data-index="0" style="--i:0">F20Cエンジン</span>
-      <span data-index="1" style="--i:1">EJ257ターボ</span>
-      <span data-index="2" style="--i:2">衝突サウンド</span>
+      <span data-index="1" style="--i:1">衝突サウンド</span>
     </div></div>
   </a>
   <a href="#systems" data-section="systems"><span class="dot-tip">Systems</span>
@@ -883,7 +882,7 @@
     <div class="feature-card">
       <div class="icon icon-orange">&#127925;</div>
       <h3>プロシージャルオーディオ</h3>
-      <p>ウェーブテーブル合成でエンジン音をリアルタイム生成。F20C VTEC切替、EJ257ボクサーランブル、ターボBOV。</p>
+      <p>ウェーブテーブル合成でエンジン音をリアルタイム生成。F20C VTECのローカム/ハイカム切替、レブリミッター、路面音。</p>
     </div>
     <div class="feature-card">
       <div class="icon icon-blue">&#127942;</div>
@@ -986,6 +985,25 @@
       <tr><td>前後ブレーキ配分</td><td>65% : 35%</td></tr>
       <tr><td>ホイール半径</td><td>0.33 m</td></tr>
     </table>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>Source: locaCarcontroller.cs &mdash; エンジントルク計算</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// RPMを正規化しトルクカーブから倍率を取得
+float normalizedRPM = Mathf.Clamp01((currentRPM - idleRPM) / (maxRPM - idleRPM));
+float torqueCurveMult = torqueCurve.Evaluate(normalizedRPM);
+float engineTorque = maxEngineTorqueNm * torqueCurveMult;
+float gearRatio = gearRatios[currentGear];
+
+// トルクコンバータ: 低RPMでもエンスト防止
+float converterMin = Mathf.Lerp(0.6f, 0.8f, steerRat);
+float minTorque = maxEngineTorqueNm * converterMin * throttleInput;
+engineTorque = Mathf.Max(engineTorque, minTorque);
+
+// 最終ホイールトルク = エンジン × ギア比 × ファイナル × スロットル
+wheelTorque = engineTorque * gearRatio * finalDriveRatio * throttleInput;
+if (currentRPM >= maxRPM * 0.98f)
+    wheelTorque *= 0.1f;  // レブリミッター</code></pre>
+    </div>
   </div>
 
   <!-- Tire Model -->
@@ -1092,6 +1110,41 @@
         </div>
         <p style="margin-top:8px; color:var(--text2); font-size:0.85rem;">左右のサスペンション伸縮差からロール対抗力を算出。コーナリング時の車体傾斜を抑制。</p>
       </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>Source: locaCarcontroller.cs &mdash; ESC (横滑り防止)</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>private void ApplyESC(float steerInput, float speedMS)
+{
+    float yawRate = rb.angularVelocity.y;
+
+    // 自転車モデル: 理想ヨーレート = (速度 × tan(舵角)) / ホイールベース
+    float wheelbase = 2.5f;
+    float steerRad = currentSteerAngle * Mathf.Deg2Rad;
+    float expectedYawRate = (speedMS * Mathf.Tan(steerRad)) / wheelbase;
+
+    float yawError = yawRate - expectedYawRate;
+
+    // ステアリング量に応じてデッドゾーンを拡大 (通常旋回を誤検知しない)
+    float steerRat = Mathf.Abs(currentSteerAngle)
+        / Mathf.Max(lowSpeedSteerAngle, 1f);
+    float escDeadZone = Mathf.Lerp(0.3f, 0.8f, steerRat);
+
+    if (Mathf.Abs(yawError) > escDeadZone)
+    {
+        float correctionBrake = (Mathf.Abs(yawError) - escDeadZone)
+            * escStrength * maxBrakeTorque * 0.25f;
+
+        if (yawError > 0f)
+            // オーバーステア: 外側前輪にブレーキ
+            target = (steerInput >= 0f) ? leftFrontWheel : rightFrontWheel;
+        else
+            // アンダーステア: 内側後輪にブレーキ
+            target = (steerInput >= 0f) ? rightRearWheel : leftRearWheel;
+
+        if (target != null) target.brakeTorque += correctionBrake;
+    }
+}</code></pre>
     </div>
   </div>
 
@@ -1276,39 +1329,6 @@
       </div>
     </div>
 
-    <div class="callout" style="margin-top:20px;">
-      <strong>WRX STI プリセット (EJ257 2.5L ターボ AWD):</strong><br>
-      CarBodyKitのデフォルト値はスバル WRX STI (EJ257) を再現。
-    </div>
-
-    <table class="param-table">
-      <tr><th>パラメータ</th><th>S2000 (デフォルト)</th><th>WRX STI (CarBodyKit)</th></tr>
-      <tr><td>駆動方式</td><td>FR</td><td>AWD</td></tr>
-      <tr><td>最大トルク</td><td>320 N&middot;m</td><td>407 N&middot;m</td></tr>
-      <tr><td>トルクカーブ特性</td><td>NA高回転型 (5点)</td><td>ターボ中間型 (7点)</td></tr>
-      <tr><td>ギア数</td><td>5速</td><td>6速</td></tr>
-      <tr><td>ファイナルドライブ</td><td>3.8</td><td>3.9</td></tr>
-      <tr><td>最大ブレーキ</td><td>3,000 N&middot;m</td><td>3,500 N&middot;m</td></tr>
-      <tr><td>ダウンフォース</td><td>1.8</td><td>2.2</td></tr>
-      <tr><td>空気抵抗</td><td>なし</td><td>0.38</td></tr>
-      <tr><td>横方extremumSlip</td><td>0.22</td><td>0.20</td></tr>
-      <tr><td>WC Substeps</td><td>デフォルト</td><td>12/15 (安定性強化)</td></tr>
-    </table>
-
-    <div class="spec-item" style="margin-top:16px;">
-      <h4>EJ257 ターボトルクカーブ (7点)</h4>
-      <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-        <span style="color:var(--text2);">// spool → boost → fat mid-range → falloff</span><br>
-        { 0.00, 0.35 } <span style="color:var(--text2);">// アイドル: ターボ未効</span><br>
-        { 0.20, 0.55 } <span style="color:var(--text2);">// スプール開始</span><br>
-        { 0.40, 0.95 } <span style="color:var(--text2);">// ブースト到達</span><br>
-        { 0.55, 1.00 } <span style="color:var(--text2);">// ピークトルク</span><br>
-        { 0.75, 0.95 } <span style="color:var(--text2);">// 中回転プラトー</span><br>
-        { 0.90, 0.85 } <span style="color:var(--text2);">// フォールオフ開始</span><br>
-        { 1.00, 0.70 } <span style="color:var(--text2);">// レブリミット付近</span>
-      </div>
-      <p style="color:var(--text2); font-size:0.85rem;">NAエンジン(S2000)が5500RPM付近にピークを持つ鋭いカーブなのに対し、ターボ(STI)は3850-5250RPMの広い範囲でフラットなトルクを発生。これがドライビングフィールの違いを生む。</p>
-    </div>
   </div>
 </section>
 
@@ -1534,6 +1554,29 @@
     <h3>&#9889; 速度制御パイプライン</h3>
     <p class="desc">複数の補正係数を順番に乗算して最終目標速度を決定。</p>
 
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--accent);">
+      <strong>Code:</strong> 多層速度パイプライン（RecordingCPUController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>// ベース速度 = レコードデータの速度 × 倍率
+float baseSpeedMS = points[currentPointIndex].speed * speedMultiplier;
+float speedBoost = GetSpeedBoost();  // 順位ブースト
+float targetSpeedMS = baseSpeedMS * speedBoost;
+
+// コーナー接近時はブースト抑制（曲がりきれなくなるため）
+float futureDropRatio = lowestFutureBase / baseSpeedMS;
+if (futureDropRatio < 0.9f) {
+    float boostReduce = InverseLerp(0.9f, 0.5f, futureDropRatio);
+    speedBoost = Lerp(speedBoost, 1f, boostReduce);  // ブーストをカット
+}
+
+// ステアリング量に応じた減速（大きく曲がるとき最大10%減速）
+if (absSteering > 0.5f)
+    targetSpeedMS *= Lerp(1f, 0.9f, Clamp01((absSteering - 0.5f) / 0.4f));
+
+// 最終判定: アクセル or ブレーキ
+isBraking = speedKmh > targetSpeedKmh + 3f;
+currentAccel = isBraking ? 0f : Clamp01((targetSpeedKmh - speedKmh) / 15f);</code></pre>
+    </div>
+
     <div class="flow">
       <div class="flow-step">記録速度 &times; 1.05</div>
       <span class="flow-arrow">&rarr;</span>
@@ -1595,6 +1638,32 @@
   <div class="detail-block">
     <h3>&#128663; 車線変更 &amp; 回避システム <span class="badge badge-purple">TACTICS</span></h3>
     <p class="desc">5つのレーン候補をスコアリングし、最適な走行ラインをリアルタイムで選択。壁レイキャストで安全範囲を制限。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--purple);">
+      <strong>Code:</strong> 他車のレーン収集 + 5候補スコアリング（RecordingCPUController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>// 近隣車両の順位・位置・使用中レーンを収集
+for (int c = 0; c < allCPUCars.Count; c++) {
+    float dist = HorizontalDistance(pos, other.pos);
+    if (dist > avoidanceRadius) continue;
+
+    float sideDot = Abs(Dot(toOther.normalized, trackRight));
+    bool isSideBySide = dist < 8f && sideDot > 0.55f;
+    bool iAmLower = currentRank > other.currentRank;
+
+    if (iAmLower || isSideBySide) {
+        shouldYield = true;
+        takenLanes[takenCount++] = other.lateralOffset;
+    }
+}
+
+// 5候補レーン（中央, ±半幅, ±全幅）をスコアで評価
+float bestScore = float.MinValue;
+for (int s = 0; s < 5; s++) {
+    float score = minSep * 3f;           // 他車との距離（最重要）
+    score += (1f - Abs(candidate - currentOffset) / step) * 1.5f; // 現在位置近さ
+    score += (1f - Abs(candidate) / step) * 0.8f;                 // 理想ライン優先
+}</code></pre>
+    </div>
 
     <div class="spec-grid">
       <div class="spec-item">
@@ -1672,6 +1741,37 @@
   <div class="detail-block">
     <h3>&#127775; ゴースト &amp; パーフェクトトレース &amp; リカバリー</h3>
 
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--accent);">
+      <strong>Code:</strong> スピン検出→ゴースト化→安定後解除（RecordingCPUController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>void UpdateGhostMode()
+{
+    float absYaw = Mathf.Abs(currentYawRate);
+    bool isActualSpin = false;
+
+    if (absYaw > spinThreshold * 1.8f)
+        isActualSpin = true;  // 非常に高いヨーレート → 確実にスピン
+    else if (absYaw > spinThreshold) {
+        float sideSpeed = Mathf.Abs(Vector3.Dot(rb.velocity, transform.right));
+        float speed = rb.velocity.magnitude;
+        // 横滑り比率50%超 or 後退中 → スピン確定
+        if (speed > 3f && (sideSpeed / speed > 0.5f || forwardSpeed < -1f))
+            isActualSpin = true;
+    }
+
+    if (isActualSpin) spinDurationTimer += Time.fixedDeltaTime;
+    else spinDurationTimer = Mathf.Max(0f, spinDurationTimer - Time.fixedDeltaTime * 2f);
+
+    // 0.3秒持続後にゴースト開始
+    if (!isGhostMode && spinDurationTimer > ghostSpinDelay)
+        EnterGhostMode();   // alpha=0.3, 衝突無効化
+
+    // 最低2.5秒 + 安定走行 + 他車と重なっていない → 解除
+    if (isGhostMode && ghostTimer > ghostMinDuration
+        && !isSpinning && fwdSpd > 3f && !IsOverlappingOtherCar())
+        ExitGhostMode();    // alpha=1.0, 衝突再開
+}</code></pre>
+    </div>
+
     <div class="spec-grid">
       <div class="spec-item">
         <h4>ゴーストモード</h4>
@@ -1733,6 +1833,26 @@
   <div class="detail-block">
     <h3>&#128663; サイドバイサイド &amp; 衝突制御 <span class="badge badge-orange">BATTLE</span></h3>
     <p class="desc">並走時の知的な制御、衝突後の安定化、最下位時の記録データ切替による追い上げ。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--orange);">
+      <strong>Code:</strong> サイドバイサイド検出と順位ベースの譲り判定（RecordingCPUController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>// サイドバイサイド判定: 真横かつ近距離
+float sideDot = Mathf.Abs(Vector3.Dot(toOther.normalized, trackRight));
+bool isSideBySide = dist < 8f && sideDot > 0.55f && Mathf.Abs(fwdDot) < 0.55f;
+
+// 順位が低い方が避ける（サイドバイサイド時は両者とも避ける）
+bool iAmLower = currentRank > other.currentRank
+    || (currentRank == other.currentRank && GetInstanceID() > other.GetInstanceID());
+if (iAmLower || isSideBySide)
+{
+    shouldYield = true;
+    if (isSideBySide) {
+        this.isSideBySide = true;
+        sideBySideTarget = other.transform;
+    }
+    takenLanes[takenCount++] = other.lateralOffset;  // 相手の使用レーンを記録
+}</code></pre>
+    </div>
 
     <div class="spec-grid">
       <div class="spec-item">
@@ -1881,6 +2001,34 @@
     <h3>&#128204; レーシングライン生成 <span class="badge badge-purple">SPLINE</span></h3>
     <p class="desc">ウェイポイントをCatmull-Romスプラインで補間し、曲率ベースのオフセットで理想ラインを計算。Laplacianスムージングで最終形状を整形。</p>
 
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--purple);">
+      <strong>Code:</strong> Catmull-Romスプライン + 曲率オフセット（AutoDriveController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>void BuildRacingLineSpline()
+{
+    // 1) Catmull-Romスプラインでセンターライン生成
+    for (int i = 0; i < count; i++) {
+        Vector3 p0 = waypoints[((i-1)+count) % count].position;
+        Vector3 p1 = waypoints[i].position;
+        Vector3 p2 = waypoints[(i+1) % count].position;
+        Vector3 p3 = waypoints[(i+2) % count].position;
+        for (int j = 0; j < splineResolution; j++) {
+            float t = (float)j / splineResolution;
+            centerLine.Add(CatmullRom(p0, p1, p2, p3, t));
+        }
+    }
+
+    // 2) 各点の曲率→イン側にオフセットしてレーシングラインへ
+    float curvature = Vector3.Cross(dirPrev, dirNext).y;  // 正=左、負=右カーブ
+    Vector3 normal = new Vector3(tangent.z, 0f, -tangent.x);
+    float curvatureStrength = Clamp(Abs(curvature) * splineResolution * 8f, 0, 1);
+    float offset = Sign(curvature) * curvatureStrength * roadWidth * 0.4f * racingLineOffset;
+    Vector3 racingPoint = centerLine[i] + normal * offset;
+
+    // 3) Laplacianスムージング(3回): ジグザグ防止
+    smoothed[i] = splinePoints[i]*0.5f + splinePoints[prev]*0.25f + splinePoints[next]*0.25f;
+}</code></pre>
+    </div>
+
     <div class="spec-item" style="margin-bottom:20px;">
       <h4>Catmull-Romスプライン公式</h4>
       <div class="formula-box" style="text-align:left;">
@@ -1931,6 +2079,30 @@
     <h3>&#128736; ステアリング制御 <span class="badge badge-blue">STEERING</span></h3>
     <p class="desc">非線形パワーカーブ + 速度依存スムージング + オーバーテイクバイアスの3段階制御。</p>
 
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--blue);">
+      <strong>Code:</strong> 非線形ステアリング + オーバーテイクバイアス（AutoDriveController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>void CalculateSteering()
+{
+    Vector3 targetPoint = CalculateRacingLineTarget(speedKmh);
+    float steerAngle = Vector3.SignedAngle(forward, (targetPoint - pos).normalized, Vector3.up);
+
+    // 非線形パワーカーブ: 小角度=穏やか、大角度=シャープ
+    float normalizedAngle = steerAngle / 90f;
+    float curvedValue = Mathf.Pow(Mathf.Abs(normalizedAngle), steeringCurve);  // 0.7
+    float targetSteering = Mathf.Clamp(sign * curvedValue * steeringSensitivity, -1f, 1f);
+
+    // 速度に応じた補間速度（高速=滑らか、低速=即応）
+    float speedFactor = Mathf.Lerp(1.5f, 0.6f, Mathf.InverseLerp(30f, 150f, speedKmh));
+    float smoothFactor = Mathf.Lerp(1f, 0.4f, Mathf.Abs(targetSteering - currentSteering));
+    currentSteering = Mathf.Lerp(currentSteering, targetSteering,
+        Time.deltaTime * steeringSmoothing * speedFactor * smoothFactor);
+
+    // オーバーテイク: 直線〜緩カーブ(20°未満)でバイアスを加算
+    if (overtakeSteeringBias != 0f && absAngle < 20f)
+        currentSteering += overtakeSteeringBias * (1f - absAngle / 20f);
+}</code></pre>
+    </div>
+
     <div class="spec-item" style="margin-bottom:20px;">
       <h4>非線形ステアリングカーブ</h4>
       <div class="formula-box" style="text-align:left;">
@@ -1976,6 +2148,30 @@
   <div class="detail-block">
     <h3>&#128168; 速度制御 &amp; ブレーキング</h3>
     <p class="desc">物理ベースの最適速度計算 + 運動方程式ブレーキ距離 + 角度別速度制限。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--accent);">
+      <strong>Code:</strong> リカバリー時の角度別速度制御（AutoDriveController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>// リカバリーモード：角度に応じた段階的な速度制限
+if (isRecovering) {
+    if (hasObstacleAhead && absAngle > 30f) {
+        currentAccelInput = 0.4f;
+        isBraking = speedKmh > 15f;
+    } else if (absAngle > 45f) {
+        currentAccelInput = 0.3f;  isBraking = speedKmh > 25f;
+    } else if (absAngle > 20f) {
+        currentAccelInput = 0.5f;  isBraking = speedKmh > 40f;
+    }
+    return;
+}
+
+// 通常走行: 物理ベース最適速度 + 学習補正
+float targetSpeed = GetOptimalSpeedForCurrentPosition();
+if (absAngle > 60f) targetSpeed = Mathf.Min(targetSpeed, 45f);
+
+// 適応学習による補正を適用
+if (enableAdaptiveLearning && learnedSpeedModifiers != null)
+    targetSpeed *= learnedSpeedModifiers[currentWaypointIndex];</code></pre>
+    </div>
 
     <div class="spec-item" style="margin-bottom:20px;">
       <h4>物理ベース最適速度</h4>
@@ -2030,6 +2226,33 @@
   <!-- Obstacle & Recovery -->
   <div class="detail-block">
     <h3>&#128678; 障害物回避 &amp; リカバリー <span class="badge badge-green">AVOIDANCE</span></h3>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--green);">
+      <strong>Code:</strong> 迂回方向決定とステアリングバイアス（AutoDriveController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>void UpdateAvoidanceLogic(float speedKmh)
+{
+    // 迂回開始: 前方12m以内 & 急カーブ中でない
+    bool shouldStartAvoid = aiCarAheadDistance < 12f && absAngle < 40f;
+    if (shouldStartAvoid && !isAvoidingAICar)
+    {
+        // ウェイポイント方向 + 前方車両位置から迂回方向を決定
+        float waypointBias = Mathf.Sign(angleToWaypoint) * 0.3f;
+        float randomValue = Random.Range(-1f, 1f) + waypointBias;
+        if (Mathf.Abs(aiCarRelativePos.x) > 0.5f)
+            randomValue -= Mathf.Sign(aiCarRelativePos.x) * 0.8f;
+        avoidDirection = (randomValue >= 0f) ? 1 : -1;
+
+        // 壁チェック: 迂回方向に壁があれば逆方向
+        if (Physics.Raycast(wallCheckOrigin, wallCheckDir, out wallHit, 4f))
+            avoidDirection = -avoidDirection;
+    }
+    // 迂回中: 距離×カーブ×速度×壁でバイアス強度を計算
+    float distanceFactor = Mathf.InverseLerp(12f, 1f, aiCarAheadDistance);
+    float curveFactor = Mathf.Lerp(1f, 0.3f, Mathf.InverseLerp(15f, 40f, absAngle));
+    float speedUrgency = Mathf.Lerp(1.5f, 0.8f, Mathf.Clamp01(speedKmh / 50f));
+    avoidSteeringBias = avoidDirection * 0.35f * distanceFactor * curveFactor * speedUrgency;
+}</code></pre>
+    </div>
 
     <div class="spec-grid">
       <div class="spec-item">
@@ -2098,6 +2321,40 @@
       <strong>参考:</strong> <em>"AI Game Programming Wisdom"</em> - Steve Rabin, Chapter: Adaptive AI
     </div>
 
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--purple);">
+      <strong>Code:</strong> スリップ検出→学習 + パーソナリティ生成（AutoDriveController.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>void DetectSlipAndLearn()
+{
+    // 全輪のスリップ量(前後+横)の平均を計算
+    float totalSlip = 0f; int wheelCount = 0;
+    foreach (AxleInfo axle in axleInfos) {
+        if (axle.leftWheel.GetGroundHit(out hit)) {
+            totalSlip += Mathf.Abs(hit.sidewaysSlip) + Mathf.Abs(hit.forwardSlip);
+            wheelCount++;
+        }
+        // rightWheelも同様...
+    }
+    currentSlipAmount = totalSlip / wheelCount;
+
+    // スリップが閾値超え → このウェイポイントの速度係数を下げる（学習）
+    if (currentSlipAmount > slipThreshold)
+        learnedSpeedModifiers[idx] = Mathf.Max(0.6f, learnedSpeedModifiers[idx] - learningRate);
+    // 安定走行中 → 少しずつ速度を戻す（10倍遅い速度で回復）
+    else if (currentSlipAmount < slipThreshold * 0.3f)
+        learnedSpeedModifiers[idx] = Mathf.Min(1f, learnedSpeedModifiers[idx] + learningRate * 0.1f);
+}
+
+void ApplyRandomPersonality()
+{
+    float v = personalityVariance;  // ±15%
+    safetyMargin      *= Random.Range(1f - v, 1f + v);  // コーナリング攻撃度
+    gripFactor        *= Random.Range(1f - v, 1f + v);
+    overtakeAggression = Clamp01(overtakeAggression * Random.Range(1f - v, 1f + v));
+    battleGripBoost    = 1f + (battleGripBoost - 1f) * Random.Range(1f - v, 1f + v);
+    maxPossibleSpeed  *= Random.Range(1f - v*0.5f, 1f + v*0.5f);  // 最高速は控えめに
+}</code></pre>
+    </div>
+
     <div class="spec-grid">
       <div class="spec-item">
         <h4>適応学習 (ウェイポイント別速度補正)</h4>
@@ -2139,6 +2396,36 @@
         v<sub>max</sub> = &radic;(&mu; &times; g &times; R) &times; 3.6 &times; safetyMargin
       </div>
       <p style="color:var(--text2); font-size:0.85rem;">3点の座標だけからコーナーの曲率半径を正確に算出。ウェイポイント間隔が不均等でも正しく動作するため、手動配置のウェイポイントに対してロバスト。</p>
+    </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <strong>Source: AutoDriveController.cs &mdash; ヘロンの公式 &amp; 物理ベース速度最適化</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>float EstimateCurveRadius(Vector3 a, Vector3 b, Vector3 c)
+{
+    Vector2 p1 = new Vector2(a.x, a.z);
+    Vector2 p2 = new Vector2(b.x, b.z);
+    Vector2 p3 = new Vector2(c.x, c.z);
+
+    float la = Vector2.Distance(p2, p3);
+    float lb = Vector2.Distance(p1, p3);
+    float lc = Vector2.Distance(p1, p2);
+
+    float s = (la + lb + lc) / 2f;                  // 半周長
+    float area = Mathf.Sqrt(s * (s-la) * (s-lb) * (s-lc)); // ヘロン
+    float radius = (la * lb * lc) / (4f * area);    // 外接円半径
+
+    return Mathf.Clamp(radius, 5f, 1000f);
+}
+
+// 物理ベースの限界速度: v = sqrt(μ × g × R)
+float maxSpeedMS = Mathf.Sqrt(friction * gravity * radius);
+float maxSpeedKmh = maxSpeedMS * 3.6f * safetyMargin;
+
+// 角度が大きいほど追加減速
+float angleMultiplier = Mathf.Lerp(1f, 0.5f,
+    Mathf.InverseLerp(10f, 90f, angle));
+optimizedSpeeds[i] = Mathf.Clamp(
+    maxSpeedKmh * angleMultiplier, minSpeed, maxPossibleSpeed);</code></pre>
     </div>
   </div>
 </section>
@@ -2228,6 +2515,28 @@
       </div>
     </div>
 
+    <div class="callout" style="margin-top:16px;">
+      <strong>Source: F20CEngineAudio.cs &mdash; ウェーブテーブル合成コア</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// === 排気パルス（オシロスコープ点火データに基づく） ===
+float pulse = Mathf.Exp(-phase01 * pulseDecay);
+
+// 燃焼後のエンジンブロック共振（減衰振動）
+float rumble = Mathf.Sin(phase01 * 2f * Mathf.PI * rumbleFreqMult)
+    * Mathf.Exp(-phase01 * pulseDecay * 0.7f) * rumbleAmount;
+
+// サブベース（クランクシャフト回転 = 点火の半分の周波数）
+float sub = Mathf.Sin((float)(phSub * 2.0 * Math.PI)) * subAmount;
+
+// 燃焼ノイズ（パルスエンベロープ連動）
+float noiseEnvelope = Mathf.Exp(-phase01 * pulseDecay * 0.4f);
+
+float s = pulse + rumble + sub + nLpf * noiseAmount * noiseEnvelope;
+
+// サチュレーション（真空管モデル）
+s *= drive;
+s = Saturate(s);  // x * (27 + x²) / (27 + 9x²)</code></pre>
+    </div>
+
     <div class="spec-item" style="margin-top:16px;">
       <h4>ローカム vs ハイカム波形比較</h4>
     </div>
@@ -2285,86 +2594,27 @@
     </div>
   </div>
 
-  <!-- EJ257 Boxer Engine Sound -->
-  <div class="detail-block">
-    <h3>&#128296; EJ257 ボクサーエンジン + ターボサウンド <span class="badge badge-blue">BOXER</span></h3>
-    <p class="desc">CarBodyKit.cs内蔵 - 水平対向4気筒特有の不等間隔排気パルス + ターボホイッスル + ブローオフバルブの3レイヤー合成。</p>
-
-    <div class="callout">
-      <strong>Dev Note:</strong> ボクサーエンジンの「ドロドロ」音の正体は不等間隔排気。通常の直4は等間隔点火(180°/180°/180°/180°)だが、水平対向では排気系統のレイアウトにより、聴覚上のパルス間隔が不均等になる。<code>unevenRatio = 0.38</code>（38:62比）でこれを模擬。
-    </div>
-
-    <div class="spec-grid">
-      <div class="spec-item">
-        <h4>Layer 1: ボクサーランブル</h4>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// 点火周波数107Hz, 不等間隔比0.38</span><br>
-          phase = (t &times; 107) % 1.0<br><br>
-          <span style="color:var(--text2);">// パルス1: 主点火</span><br>
-          d1 = phase<br>
-          if d1 &lt; 0.35:<br>
-          &nbsp; env = exp(-d1 &times; 20)<br>
-          &nbsp; p1 = env &times; (sin(12&pi;d) &times; 1.0<br>
-          &nbsp;&nbsp; + sin(4&pi;d) &times; 0.8 + sin(8&pi;d) &times; 0.4)<br><br>
-          <span style="color:var(--text2);">// パルス2: 不等間隔パルス</span><br>
-          d2 = (phase - 0.38 + 1) % 1<br>
-          <span style="color:var(--text2);">// 同じ波形、位相を38%オフセット</span><br><br>
-          raw = p1 + p2<br>
-          output = LPF(raw, 0.28) + mech_noise &times; 0.05
-        </div>
-      </div>
-      <div class="spec-item">
-        <h4>Layer 2: ターボホイッスル</h4>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// 基本周波数3500Hz + 2倍音7000Hz</span><br>
-          whine = sin(t &times; 3500 &times; 2&pi;) &times; 0.65<br>
-          harm = sin(t &times; 7000 &times; 2&pi;) &times; 0.25<br>
-          <span style="color:var(--text2);">// 47Hz振幅変調(コンプレッサー回転揺らぎ)</span><br>
-          mod = 1 + sin(t &times; 47 &times; 2&pi;) &times; 0.25<br><br>
-          <span style="color:var(--text2);">// ブースト連動</span><br>
-          targetBoost = throttle &times; Clamp01((rpm-0.2)/0.3)<br>
-          volume = turboWhineVol &times; currentBoost<br>
-          pitch = Lerp(0.5, 1.8, boost &times; normalizedRPM)
-        </div>
-      </div>
-    </div>
-
-    <div class="spec-grid" style="margin-top:16px;">
-      <div class="spec-item">
-        <h4>Layer 3: ブローオフバルブ (BOV)</h4>
-        <p>スロットルを急閉した時に余剰ブースト圧を放出する音。2フェーズ合成。</p>
-        <div class="formula-box" style="font-size:0.82rem; text-align:left;">
-          <span style="color:var(--text2);">// 発動条件</span><br>
-          throttleDrop > 0.5 AND prevBoost > 0.4<br><br>
-          <span style="color:var(--text2);">// Phase 1 (0-0.15s): 初期エアバースト</span><br>
-          env = exp(-t &times; 10)<br>
-          sample = env &times; (hiss &times; 0.7 + BP_2kHz &times; 0.5)<br><br>
-          <span style="color:var(--text2);">// Phase 2 (0.15-0.6s): フラッター</span><br>
-          flutterEnv = exp(-ft &times; 4)<br>
-          pulse = |sin(ft &times; 25&pi;)| > 0.6 ? 1 : 0<br>
-          sample = env &times; pulse &times; (noise + tone_800Hz)
-        </div>
-        <p style="color:var(--text2); font-size:0.85rem;">Phase 1は圧力放出の「プシュー」、Phase 2はバルブのフラッター振動。25Hzの矩形波パルスでバルブの断続的な開閉を模擬。</p>
-      </div>
-      <div class="spec-item">
-        <h4>ブーストモデル</h4>
-        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
-          <span style="color:var(--text2);">// 非対称追従 (spool up遅い, ブースト抜け速い)</span><br>
-          targetBoost = throttle &times; Clamp01((rpm-0.2)/0.3)<br>
-          rate = (target > current) ? 3 : 8<br>
-          currentBoost = Lerp(current, target, dt &times; rate)<br><br>
-          <span style="color:var(--text2);">// ↑ ブースト上昇3Hz, 低下8Hz</span><br>
-          <span style="color:var(--text2);">// スプールアップ約0.3秒, 抜け約0.12秒</span>
-        </div>
-        <p style="color:var(--text2); font-size:0.85rem;">RPM 20%以下ではブーストゼロ（タービン未作動）。20-50%のゾーンでリニアに上昇し、50%以上でフルブースト。</p>
-      </div>
-    </div>
-  </div>
-
   <!-- Crash Sound -->
   <div class="detail-block">
     <h3>&#128165; 衝突サウンド <span class="badge badge-green">COLLISION</span></h3>
     <p class="desc">CrashSound.cs - OnCollisionEnterで衝突相対速度を取得し、速度に比例した音量でワンショット再生。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--green);">
+      <strong>Code:</strong> 衝突速度→音量マッピング（CrashSound.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>void OnCollisionEnter(Collision collision)
+{
+    float relativeSpeed = collision.relativeVelocity.magnitude;
+
+    if (relativeSpeed >= minCollisionSpeed && crashClip != null)
+    {
+        // 5m/s(18km/h)〜30m/s(108km/h)を0〜1に正規化
+        float t = Mathf.InverseLerp(minCollisionSpeed, maxVolumeSpeed, relativeSpeed);
+        float volume = Mathf.Lerp(0.2f, 1.0f, t);
+
+        audioSource.PlayOneShot(crashClip, volume);  // 重複再生可能
+    }
+}</code></pre>
+    </div>
 
     <div class="spec-grid">
       <div class="spec-item">
@@ -2459,6 +2709,30 @@
     <div class="callout">
       <strong>Dev Note:</strong> 順位計算の最大の課題は「全車が同じコースを走っている保証がない」こと。このシステムでは、1台分のレコーディングデータ（約400-800ポイント）を基準軸として、全車の位置を最近傍探索で投影する。コースのショートカットや逆走も正しく検出できる。<br>
       <strong>参考:</strong> F1ゲームの順位計算でもセクターベースの進行度追跡が標準手法。
+    </div>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--purple);">
+      <strong>Code:</strong> 進行度計算とラップ検出（RacePositionManager.cs）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>float UpdateProgress(int id, Vector3 worldPos)
+{
+    // 最近傍点探索: 全参照ポイントとのXZ距離を比較
+    int ptIdx = FindNearest(worldPos);
+
+    // ラップアラウンド検出: コース終盤(75%超)→序盤(25%未満)に
+    // ジャンプした場合、周回数をインクリメント
+    if (prevPtIdx.TryGetValue(id, out int prev))
+    {
+        if (prev > refPointsCount * 0.75f
+            && ptIdx < refPointsCount * 0.25f)
+            lapCounts[id] = lapCounts.ContainsKey(id)
+                ? lapCounts[id] + 1 : 1;
+    }
+    prevPtIdx[id] = ptIdx;
+    if (!lapCounts.ContainsKey(id)) lapCounts[id] = 0;
+
+    // 進行度 = 周回数 + コース内の正規化位置
+    return lapCounts[id] + (float)ptIdx / refPointsCount;
+}</code></pre>
     </div>
 
     <div class="spec-grid">
@@ -2729,6 +3003,28 @@
         <p><code>OnDisable()</code>で<code>SetMotorSpeeds(0, 0)</code>を呼び出し、車がDestroy/無効化されたときにモーターを確実に停止。ゲームパッド未接続時（<code>Gamepad.current == null</code>）は振動処理をスキップし、路面オーディオの更新だけを実行する。</p>
       </div>
     </div>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>Source: locaCarcontroller.cs &mdash; UpdateHaptics() 出力部分</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// デッドゾーン: 0.05未満の微振動をカットし路面コントラストを際立たせる
+lowMotor  = lowMotor  < 0.05f ? 0f : Mathf.Clamp01(lowMotor);
+highMotor = highMotor < 0.05f ? 0f : Mathf.Clamp01(highMotor);
+
+gp.SetMotorSpeeds(lowMotor, highMotor);</code></pre>
+    </div>
+
+    <div class="callout" style="margin-top:12px;">
+      <strong>Source: locaCarcontroller.cs &mdash; Inspector設定フィールド</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>[Header("=== Controller Haptics ===")]
+[SerializeField] private bool hapticsEnabled = true;
+[SerializeField] private float collisionRumbleScale = 0.8f;
+[SerializeField] private float collisionRumbleDuration = 0.4f;
+[SerializeField] private float dirtRumbleLow  = 1.0f;
+[SerializeField] private float dirtRumbleHigh = 0.9f;
+[SerializeField] private string dirtTag  = "Dirt";
+[SerializeField] private string zebraTag = "Zebra";
+[SerializeField] private float zebraRumble = 0.8f;</code></pre>
+    </div>
   </div>
 
   <div class="detail-block">
@@ -2749,6 +3045,27 @@
         <p>低周波モーター: <code>dirtRumbleLow</code>（デフォルト1.0）× 速度スケール。高周波モーター: <code>dirtRumbleHigh</code>（デフォルト0.9）× 速度スケール。低周波をやや強めにすることで「重い地面」の感覚を表現。高速ダートでは両モーターがほぼフル稼働。</p>
       </div>
     </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <strong>Source: locaCarcontroller.cs &mdash; ダート振動計算</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// 路面検出: 4輪すべてのWheelColliderをチェック
+for (int i = 0; i < 4; i++)
+{
+    if (wheels[i].GetGroundHit(out hit) && hit.collider != null)
+    {
+        if (hit.collider.CompareTag(dirtTag))
+            isOnDirt = true;
+    }
+}
+
+// Dirt: continuous speed-scaled rumble
+if (isOnDirt)
+{
+    float speedScale = Mathf.Clamp01(speedMS / 30f);
+    lowMotor  += dirtRumbleLow  * speedScale;   // 重い揺れ
+    highMotor += dirtRumbleHigh * speedScale;    // 細かいバズ
+}</code></pre>
+    </div>
   </div>
 
   <div class="detail-block">
@@ -2757,6 +3074,63 @@
 
     <div class="callout">
       <strong>Dev Note:</strong> 実車の縁石は等間隔に配置された凸凹。低速で乗ると「ゴトゴト」、高速で乗ると「ブブブブ」と振動の質が変わる。この物理現象を<code>Sin(time * freq * PI)</code>のパルス周波数変化で再現。
+    </div>
+
+    <!-- 縁石振動の図解 -->
+    <div style="margin:24px 0; background:#fff; border-radius:10px; padding:20px; border:1px solid rgba(0,0,0,0.08);">
+      <svg viewBox="0 0 700 280" style="width:100%; max-width:700px; display:block; margin:0 auto;" xmlns="http://www.w3.org/2000/svg">
+        <!-- 路面 -->
+        <rect x="0" y="140" width="700" height="40" fill="#555" rx="2"/>
+        <!-- 縁石ストライプ (赤白緑) -->
+        <rect x="40" y="100" width="620" height="40" fill="#fff" rx="4"/>
+        <rect x="40" y="100" width="50" height="40" fill="#e74c3c"/>
+        <rect x="140" y="100" width="50" height="40" fill="#e74c3c"/>
+        <rect x="240" y="100" width="50" height="40" fill="#e74c3c"/>
+        <rect x="340" y="100" width="50" height="40" fill="#e74c3c"/>
+        <rect x="440" y="100" width="50" height="40" fill="#e74c3c"/>
+        <rect x="540" y="100" width="50" height="40" fill="#e74c3c"/>
+        <rect x="640" y="100" width="20" height="40" fill="#e74c3c"/>
+        <!-- 緑のストライプ -->
+        <rect x="40" y="60" width="620" height="40" fill="#fff" rx="4"/>
+        <rect x="40" y="60" width="50" height="40" fill="#27ae60"/>
+        <rect x="140" y="60" width="50" height="40" fill="#27ae60"/>
+        <rect x="240" y="60" width="50" height="40" fill="#27ae60"/>
+        <rect x="340" y="60" width="50" height="40" fill="#27ae60"/>
+        <rect x="440" y="60" width="50" height="40" fill="#27ae60"/>
+        <rect x="540" y="60" width="50" height="40" fill="#27ae60"/>
+        <rect x="640" y="60" width="20" height="40" fill="#27ae60"/>
+        <!-- タイヤ -->
+        <ellipse cx="200" cy="140" rx="28" ry="18" fill="#222" stroke="#444" stroke-width="2"/>
+        <text x="200" y="145" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">Tire</text>
+        <!-- 凸凹矢印 -->
+        <line x1="140" y1="105" x2="140" y2="85" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrowRed)"/>
+        <line x1="240" y1="105" x2="240" y2="85" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrowRed)"/>
+        <line x1="340" y1="105" x2="340" y2="85" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrowRed)"/>
+        <defs>
+          <marker id="arrowRed" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e74c3c"/></marker>
+          <marker id="arrowBlue" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2e86de"/></marker>
+        </defs>
+        <!-- 等間隔ラベル -->
+        <text x="90" y="52" text-anchor="middle" fill="#e74c3c" font-size="11" font-weight="600">等間隔の凸凹</text>
+        <line x1="90" y1="100" x2="190" y2="100" stroke="#e74c3c" stroke-width="1" stroke-dasharray="4"/>
+        <text x="140" y="96" text-anchor="middle" fill="#e74c3c" font-size="9">間隔</text>
+        <!-- 振動パルス波形 -->
+        <text x="350" y="200" text-anchor="middle" fill="#2e86de" font-size="12" font-weight="700">Sin波パルス (コントローラー振動)</text>
+        <!-- 低速波形 -->
+        <text x="110" y="225" text-anchor="middle" fill="#888" font-size="10">低速 8Hz</text>
+        <path d="M40,250 Q65,220 90,250 Q115,280 140,250 Q165,220 190,250 Q215,280 240,250" stroke="#2e86de" stroke-width="2.5" fill="none"/>
+        <!-- 高速波形 -->
+        <text x="490" y="225" text-anchor="middle" fill="#888" font-size="10">高速 45Hz</text>
+        <path d="M400,250 Q407,235 414,250 Q421,265 428,250 Q435,235 442,250 Q449,265 456,250 Q463,235 470,250 Q477,265 484,250 Q491,235 498,250 Q505,265 512,250 Q519,235 526,250 Q533,265 540,250 Q547,235 554,250 Q561,265 568,250 Q575,235 582,250 Q589,265 596,250 Q603,235 610,250 Q617,265 624,250" stroke="#e84393" stroke-width="2.5" fill="none"/>
+        <!-- 速度矢印 -->
+        <line x1="270" y1="250" x2="370" y2="250" stroke="#888" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+        <text x="320" y="270" text-anchor="middle" fill="#888" font-size="10">速度 &rarr;</text>
+        <!-- タイヤ→振動の矢印 -->
+        <line x1="200" y1="160" x2="200" y2="195" stroke="#2e86de" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrowBlue)"/>
+        <text x="230" y="180" fill="#2e86de" font-size="9">WheelCollider</text>
+        <text x="230" y="192" fill="#2e86de" font-size="9">GetGroundHit()</text>
+      </svg>
+      <p style="text-align:center; color:var(--text2); font-size:0.82rem; margin-top:8px;">タイヤが等間隔の凸凹を踏むたびにSin波パルスが発生。速度が上がるほど周波数が増加し、振動の質が「ゴトゴト」→「ブブブブ」に変化。</p>
     </div>
 
     <div class="spec-grid">
@@ -2776,6 +3150,23 @@
         <h4>モーター比率</h4>
         <p>低周波: <code>zebraRumble * 0.5 * pulse * speedScale</code>。高周波: <code>zebraRumble * pulse * speedScale</code>。高周波を低周波の2倍にすることで「硬い凸凹を叩く」鋭いバズ感を強調。<code>zebraRumble</code>デフォルト0.8。</p>
       </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <strong>Source: locaCarcontroller.cs &mdash; 縁石パルス振動</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// Zebra/Kerb: speed-dependent pulsating vibration
+if (isOnZebra)
+{
+    // パルス周波数: 低速8Hz → 高速45Hz (縁石の凸凹を踏む間隔)
+    float zebraFreq = Mathf.Lerp(8f, 45f, Mathf.Clamp01(speedMS / 30f));
+
+    // Sin波でバンプの乗り上げ→離脱サイクルを生成
+    float pulse = Mathf.Abs(Mathf.Sin(Time.time * zebraFreq * Mathf.PI));
+    float speedScale = Mathf.Clamp01(speedMS / 20f);
+
+    lowMotor  += zebraRumble * 0.5f * pulse * speedScale;  // 鈍い振動
+    highMotor += zebraRumble * pulse * speedScale;          // 鋭いバズ
+}</code></pre>
     </div>
   </div>
 
@@ -2801,6 +3192,41 @@
         <p>既に振動中に新たな衝突が発生した場合、<code>intensity > collisionRumbleIntensity * (timer / duration)</code>で「現在の残留振動より強いか」を比較。強い場合のみタイマーと強度を更新。連続衝突で弱い衝撃に上書きされることを防止。</p>
       </div>
     </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <strong>Source: locaCarcontroller.cs &mdash; OnCollisionEnter</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>void OnCollisionEnter(Collision collision)
+{
+    if (!hapticsEnabled) return;
+
+    // インパルスをフレーム時間で割って瞬間的な力に変換
+    float impactForce = collision.impulse.magnitude
+        / Mathf.Max(Time.fixedDeltaTime, 0.001f);
+    float intensity = Mathf.Clamp01(
+        impactForce * collisionRumbleScale / (rb != null ? rb.mass : 1500f));
+    intensity = Mathf.Max(intensity, 0.9f); // 最低90% - 必ず強く感じる
+
+    // 現在の残留振動より強い場合のみ更新
+    if (intensity > collisionRumbleIntensity
+        * (collisionRumbleTimer / Mathf.Max(collisionRumbleDuration, 0.01f)))
+    {
+        collisionRumbleIntensity = intensity;
+        collisionRumbleTimer = collisionRumbleDuration;
+    }
+}</code></pre>
+    </div>
+
+    <div class="callout" style="margin-top:12px;">
+      <strong>Source: locaCarcontroller.cs &mdash; 線形減衰 (UpdateHaptics内)</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// Collision: decaying pulse
+if (collisionRumbleTimer > 0f)
+{
+    collisionRumbleTimer -= Time.fixedDeltaTime;
+    float fade = Mathf.Clamp01(collisionRumbleTimer / collisionRumbleDuration);
+    lowMotor  += collisionRumbleIntensity * fade * 1.0f;
+    highMotor += collisionRumbleIntensity * fade * 1.0f;
+}</code></pre>
+    </div>
   </div>
 
   <div class="detail-block">
@@ -2824,6 +3250,30 @@
         <h4>モーター比率</h4>
         <p>低周波: <code>gripRumbleIntensity * gripFade * 0.5</code>。高周波: <code>gripRumbleIntensity * gripFade * 0.8</code>。<code>gripRumbleIntensity</code>デフォルト0.4。高周波が低周波の1.6倍で、タイヤが路面を「擦る」ザラついたバズ感を強調。ダートの重い振動とは対照的な質感。</p>
       </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <strong>Source: locaCarcontroller.cs &mdash; グリップ使用率算出 &amp; スリップ振動</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// 各輪のスリップ量から最大グリップ使用率を算出
+float fwdSlipNorm  = Mathf.Abs(hit.forwardSlip)
+    / Mathf.Max(fwdAsymptoteSlip, 0.01f);
+float sideSlipNorm = Mathf.Abs(hit.sidewaysSlip)
+    / Mathf.Max(sideAsymptoteSlip, 0.01f);
+float wheelGrip = Mathf.Max(fwdSlipNorm, sideSlipNorm);
+if (wheelGrip > maxGripUsage) maxGripUsage = wheelGrip;
+
+// スムージング (急激な変動を抑制、1.0超も追従)
+currentGripUsage = Mathf.Lerp(
+    currentGripUsage, maxGripUsage, Time.fixedDeltaTime * 12f);
+
+// 閾値を超えた場合のみ振動
+if (currentGripUsage > skidGripThreshold)
+{
+    float gripFade = Mathf.Clamp01(
+        Mathf.InverseLerp(skidGripThreshold, 4f, currentGripUsage));
+    lowMotor  += gripRumbleIntensity * gripFade * 0.5f;
+    highMotor += gripRumbleIntensity * gripFade * 0.8f;
+}</code></pre>
     </div>
   </div>
 
