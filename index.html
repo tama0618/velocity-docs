@@ -2984,54 +2984,61 @@ document.addEventListener('DOMContentLoaded', () => {
   // === ACTIVE NAV LINK HIGHLIGHT + COLOR SYNC ===
   let currentSectionId = null;
   let zoomTimer = null;
+  const visibleSections = new Set();
 
   const navObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.id;
-        if (id === currentSectionId) return;
-        const colors = sectionColors[id];
+      if (entry.isIntersecting) visibleSections.add(entry.target.id);
+      else visibleSections.delete(entry.target.id);
+    });
 
-        // Update nav bar immediately
-        if (colors) {
-          nav.style.setProperty('--nav-accent', colors.accent);
-        }
-        navLinks.forEach(link => {
-          link.style.color = '';
-          link.classList.remove('nav-active');
-          if (link.getAttribute('href') === '#' + id) {
-            link.style.color = colors ? colors.accent : '';
-            link.classList.add('nav-active');
-          }
-        });
+    // Pick topmost visible section (DOM order)
+    let id = null;
+    for (const s of sections) {
+      if (visibleSections.has(s.id)) { id = s.id; break; }
+    }
+    if (!id || id === currentSectionId) return;
 
-        const isFirst = currentSectionId === null;
-        currentSectionId = id;
-        clearTimeout(zoomTimer);
+    const colors = sectionColors[id];
 
-        const switchDot = () => {
-          if (colors) {
-            currentColor = colors;
-            document.documentElement.style.setProperty('--active-accent', colors.accent);
-            document.documentElement.style.setProperty('--active-accent2', colors.accent2);
-            document.documentElement.style.setProperty('--active-glow', colors.accent + '12');
-          }
-          dotLinks.forEach(dot => dot.classList.toggle('dot-active', dot.dataset.section === id));
-          progressDots.querySelectorAll('.sub-active').forEach(s => s.classList.remove('sub-active'));
-        };
-
-        if (isFirst) {
-          switchDot();
-          requestAnimationFrame(() => progressDots.classList.add('zoomed'));
-        } else {
-          progressDots.classList.remove('zoomed');
-          zoomTimer = setTimeout(() => {
-            switchDot();
-            zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 700);
-          }, 450);
-        }
+    // Update nav bar immediately
+    if (colors) {
+      nav.style.setProperty('--nav-accent', colors.accent);
+    }
+    navLinks.forEach(link => {
+      link.style.color = '';
+      link.classList.remove('nav-active');
+      if (link.getAttribute('href') === '#' + id) {
+        link.style.color = colors ? colors.accent : '';
+        link.classList.add('nav-active');
       }
     });
+
+    const isFirst = currentSectionId === null;
+    currentSectionId = id;
+    clearTimeout(zoomTimer);
+
+    const switchDot = () => {
+      if (colors) {
+        currentColor = colors;
+        document.documentElement.style.setProperty('--active-accent', colors.accent);
+        document.documentElement.style.setProperty('--active-accent2', colors.accent2);
+        document.documentElement.style.setProperty('--active-glow', colors.accent + '12');
+      }
+      dotLinks.forEach(dot => dot.classList.toggle('dot-active', dot.dataset.section === id));
+      progressDots.querySelectorAll('.sub-active').forEach(s => s.classList.remove('sub-active'));
+    };
+
+    if (isFirst) {
+      switchDot();
+      requestAnimationFrame(() => progressDots.classList.add('zoomed'));
+    } else {
+      progressDots.classList.remove('zoomed');
+      zoomTimer = setTimeout(() => {
+        switchDot();
+        zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 700);
+      }, 450);
+    }
   }, { threshold: 0, rootMargin: '-64px 0px -50% 0px' });
   sections.forEach(s => navObserver.observe(s));
 
