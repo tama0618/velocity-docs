@@ -521,6 +521,92 @@
     .img-showcase { grid-template-columns: 1fr; }
     .diagram-row { grid-template-columns: 1fr; }
   }
+
+  /* ===== PROGRESS DOTS ===== */
+  #progress-dots {
+    position: fixed;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  #progress-dots.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #progress-dots a {
+    position: relative;
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin: 10px 0;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  /* The dot */
+  #progress-dots a::after {
+    content: '';
+    position: absolute;
+    top: 1px; left: 1px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid #c0c4d0;
+    background: transparent;
+    transition: border-color 0.4s, background 0.4s, box-shadow 0.4s, transform 0.4s;
+  }
+  /* Connecting line between dots */
+  #progress-dots a:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 5.5px;
+    width: 1px;
+    height: 20px;
+    background: #d0d3dc;
+    transition: background 0.4s;
+  }
+  /* Active dot */
+  #progress-dots a.dot-active::after {
+    border-color: var(--active-accent, #e8384f);
+    background: var(--active-accent, #e8384f);
+    box-shadow: 0 0 10px var(--active-accent, #e8384f), 0 0 20px color-mix(in srgb, var(--active-accent, #e8384f) 30%, transparent);
+    transform: scale(1.25);
+  }
+  /* Hover */
+  #progress-dots a:hover::after {
+    border-color: var(--active-accent, #e8384f);
+    transform: scale(1.2);
+  }
+  /* Tooltip */
+  #progress-dots a .dot-tip {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    background: rgba(26,30,46,0.92);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  #progress-dots a:hover .dot-tip {
+    opacity: 1;
+  }
+  @media (max-width: 1100px) {
+    #progress-dots { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -544,6 +630,17 @@
     <li><a href="#controls">Controls</a></li>
   </ul>
 </nav>
+
+<!-- PROGRESS DOTS -->
+<div id="progress-dots">
+  <a href="#about" data-section="about"><span class="dot-tip">About</span></a>
+  <a href="#player" data-section="player"><span class="dot-tip">Player</span></a>
+  <a href="#ai-recording" data-section="ai-recording"><span class="dot-tip">AI: Recording</span></a>
+  <a href="#ai-autodrive" data-section="ai-autodrive"><span class="dot-tip">AI: AutoDrive</span></a>
+  <a href="#audio" data-section="audio"><span class="dot-tip">Audio</span></a>
+  <a href="#systems" data-section="systems"><span class="dot-tip">Systems</span></a>
+  <a href="#controls" data-section="controls"><span class="dot-tip">Controls</span></a>
+</div>
 
 <!-- FLOATING PARTICLES -->
 <canvas id="particles" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></canvas>
@@ -2541,6 +2638,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const sections = document.querySelectorAll('section[id]');
   let currentColor = sectionColors['about'];
 
+  // === PROGRESS DOTS ===
+  const progressDots = document.getElementById('progress-dots');
+  const dotLinks = progressDots.querySelectorAll('a');
+  const heroSection = document.querySelector('section.hero');
+
+  // Show/hide dots based on scroll past hero
+  window.addEventListener('scroll', () => {
+    if (!heroSection) return;
+    const heroBottom = heroSection.getBoundingClientRect().bottom;
+    progressDots.classList.toggle('visible', heroBottom < 0);
+  }, { passive: true });
+
+  // Click handler for smooth scroll
+  dotLinks.forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById(dot.dataset.section);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
   // === ACTIVE NAV LINK HIGHLIGHT + COLOR SYNC ===
   const navObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -2563,6 +2681,10 @@ document.addEventListener('DOMContentLoaded', () => {
             link.style.color = currentColor.accent;
             link.classList.add('nav-active');
           }
+        });
+        // Highlight active progress dot
+        dotLinks.forEach(dot => {
+          dot.classList.toggle('dot-active', dot.dataset.section === id);
         });
       }
     });
