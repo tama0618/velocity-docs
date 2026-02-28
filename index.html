@@ -3438,41 +3438,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // === ACTIVE NAV LINK HIGHLIGHT + COLOR SYNC ===
+  // === ACTIVE SECTION & SUB-TOPIC TRACKING (scroll-based) ===
   let currentSectionId = null;
   let zoomTimer = null;
-  const visibleSections = new Set();
 
-  const navObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) visibleSections.add(entry.target.id);
-      else visibleSections.delete(entry.target.id);
-    });
+  const subTopicMap = {};
+  sections.forEach(section => {
+    const h3s = section.querySelectorAll('.detail-block h3');
+    if (h3s.length) subTopicMap[section.id] = Array.from(h3s);
+  });
 
-    // Pick topmost visible section (DOM order)
-    let id = null;
+  function updateActiveDot() {
+    const threshold = 64 + window.innerHeight * 0.25;
+
+    // Find active section: last section whose top has scrolled past threshold
+    let activeId = null;
     for (const s of sections) {
-      if (visibleSections.has(s.id)) { id = s.id; break; }
+      if (s.getBoundingClientRect().top <= threshold) activeId = s.id;
     }
-    if (!id || id === currentSectionId) return;
+    if (!activeId) return;
 
-    const colors = sectionColors[id];
-
-    // Update nav bar immediately
-    if (colors) {
-      nav.style.setProperty('--nav-accent', colors.accent);
+    // Update sub-topic: last h3 whose top has scrolled past threshold
+    const h3s = subTopicMap[activeId];
+    const dot = progressDots.querySelector(`a[data-section="${activeId}"]`);
+    if (h3s && dot) {
+      let activeIdx = -1;
+      for (let i = 0; i < h3s.length; i++) {
+        if (h3s[i].getBoundingClientRect().top <= threshold) activeIdx = i;
+      }
+      dot.querySelectorAll('.branch-items span').forEach((item, i) => {
+        item.classList.toggle('sub-active', i === activeIdx);
+      });
     }
+
+    // Section change handling
+    if (activeId === currentSectionId) return;
+    const colors = sectionColors[activeId];
+
+    // Update nav bar
+    if (colors) nav.style.setProperty('--nav-accent', colors.accent);
     navLinks.forEach(link => {
       link.style.color = '';
       link.classList.remove('nav-active');
-      if (link.getAttribute('href') === '#' + id) {
+      if (link.getAttribute('href') === '#' + activeId) {
         link.style.color = colors ? colors.accent : '';
         link.classList.add('nav-active');
       }
     });
 
     const isFirst = currentSectionId === null;
-    currentSectionId = id;
+    currentSectionId = activeId;
     clearTimeout(zoomTimer);
 
     const switchDot = () => {
@@ -3482,8 +3497,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--active-accent2', colors.accent2);
         document.documentElement.style.setProperty('--active-glow', colors.accent + '12');
       }
-      dotLinks.forEach(dot => dot.classList.toggle('dot-active', dot.dataset.section === id));
-      progressDots.querySelectorAll('.sub-active').forEach(s => s.classList.remove('sub-active'));
+      dotLinks.forEach(d => d.classList.toggle('dot-active', d.dataset.section === activeId));
+      // Clear sub-active only on other sections
+      dotLinks.forEach(d => {
+        if (d.dataset.section !== activeId)
+          d.querySelectorAll('.sub-active').forEach(s => s.classList.remove('sub-active'));
+      });
     };
 
     if (isFirst) {
@@ -3496,34 +3515,16 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 700);
       }, 450);
     }
-  }, { threshold: 0, rootMargin: '-64px 0px -50% 0px' });
-  sections.forEach(s => navObserver.observe(s));
+  }
 
-  // === SUB-TOPIC BRANCH TRACKING ===
-  const subTopicMap = {};
-  sections.forEach(section => {
-    const h3s = section.querySelectorAll('.detail-block h3');
-    if (h3s.length) subTopicMap[section.id] = Array.from(h3s);
-  });
-
-  const subObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const h3 = entry.target;
-      const section = h3.closest('section[id]');
-      if (!section) return;
-      const dot = progressDots.querySelector(`a[data-section="${section.id}"]`);
-      if (!dot) return;
-      const h3s = subTopicMap[section.id];
-      if (!h3s) return;
-      const idx = h3s.indexOf(h3);
-      dot.querySelectorAll('.branch-items span').forEach((item, i) => {
-        item.classList.toggle('sub-active', i === idx);
-      });
-    });
-  }, { threshold: 0, rootMargin: '0px 0px -70% 0px' });
-
-  Object.values(subTopicMap).flat().forEach(h3 => subObserver.observe(h3));
+  let dotTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!dotTicking) {
+      requestAnimationFrame(() => { updateActiveDot(); dotTicking = false; });
+      dotTicking = true;
+    }
+  }, { passive: true });
+  updateActiveDot();
 
   // Branch label click → scroll to h3
   progressDots.querySelectorAll('.branch-items span').forEach(span => {
