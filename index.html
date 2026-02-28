@@ -816,6 +816,9 @@
   <a href="#controls" data-section="controls"><span class="dot-tip">Controls</span>
     <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
       <span data-index="0" style="--i:0">キーバインド一覧</span>
+      <span data-index="1" style="--i:1">デッドゾーン＆リマップ</span>
+      <span data-index="2" style="--i:2">動的ブレーキバイアス</span>
+      <span data-index="3" style="--i:3">シフトフィール</span>
     </div></div>
   </a>
   <a href="#haptics" data-section="haptics"><span class="dot-tip">Haptics</span>
@@ -2955,10 +2958,11 @@ s = Saturate(s);  // x * (27 + x²) / (27 + 9x²)</code></pre>
   <div class="section-header">
     <div class="label">Controls</div>
     <h2>操作方法</h2>
-    <p>キーボードとゲームパッドの両方に完全対応</p>
+    <p>キーボードとゲームパッドの両方に完全対応 &mdash; 入力処理の各段階でレースゲームとしての操作感を追求</p>
   </div>
 
   <div class="detail-block">
+    <h3>&#127918; キーバインド一覧</h3>
     <table class="controls-table">
       <tr><th>操作</th><th>キーボード</th><th>ゲームパッド</th></tr>
       <tr><td>ステアリング</td><td>A/D または &larr;/&rarr;</td><td>左スティック 左右</td></tr>
@@ -2970,6 +2974,170 @@ s = Saturate(s);  // x * (27 + x²) / (27 + 9x²)</code></pre>
       <tr><td>リセット</td><td>R</td><td>&mdash;</td></tr>
       <tr><td>カメラ切替</td><td>&mdash;</td><td>十字キー 上下</td></tr>
     </table>
+  </div>
+
+  <!-- Dead Zone & Input Remap -->
+  <div class="detail-block">
+    <h3>&#128377; デッドゾーン＆入力リマップ <span class="badge badge-blue">INPUT</span></h3>
+    <p class="desc">ゲームパッドの入力をそのまま使うと微小な傾きでも車が動いてしまう。デッドゾーンと再マッピングで「ニュートラルの静寂」と「動き出しの滑らかさ」を両立。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> 多くのゲームはデッドゾーン内を0、超えた瞬間にraw値をそのまま使うため閾値付近で入力がジャンプする。本作ではデッドゾーン超過後の値を <code>(value - deadzone) / (1 - deadzone)</code> で0〜1に再マッピングし、ジャンプを完全に排除。スティックのわずかな傾き始めから1:1でリニアに車が応答する。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>スティック &amp; トリガー閾値</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          STICK_DEADZONE = 0.12 <span style="color:var(--text2);">// 左スティック</span><br>
+          TRIGGER_DEADZONE = 0.08 <span style="color:var(--text2);">// LT / RT</span><br><br>
+          <span style="color:var(--text2);">// 再マッピング: 閾値を超えた分を0〜1に正規化</span><br>
+          if |value| &lt; deadzone: return 0<br>
+          return sign &times; (|value| - dz) / (1 - dz)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">スティックは12%、トリガーは8%。トリガーはバネの戻りが強く微小入力が少ないため低めの閾値を採用。</p>
+      </div>
+      <div class="spec-item">
+        <h4>KB / ゲームパッド自動切替</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// ステアリング: 絶対値が大きい方を採用</span><br>
+          kb = Input.GetAxis("Horizontal")<br>
+          pad = ApplyDeadzone(leftStick.x)<br>
+          steer = |pad| &gt; |kb| ? pad : kb<br><br>
+          <span style="color:var(--text2);">// スロットル: KB(W/↑)とRT(右トリガー)の大きい方</span><br>
+          <span style="color:var(--text2);">// ※左スティックY軸は無視（コーナリング中の誤入力防止）</span>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">キーボードとゲームパッドの同時接続に対応。デバイス切替なしで自然に入力が引き継がれる。スロットルにスティックY軸を使わないのは、横に倒したときの斜め入力（コーナリングブリード）を防ぐため。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>Source: locaCarcontroller.cs &mdash; デッドゾーン再マッピング</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>private const float STICK_DEADZONE = 0.12f;
+private const float TRIGGER_DEADZONE = 0.08f;
+
+private static float ApplyDeadzone(float value, float deadzone)
+{
+    float abs = Mathf.Abs(value);
+    if (abs < deadzone) return 0f;
+    float sign = Mathf.Sign(value);
+    return sign * (abs - deadzone) / (1f - deadzone);
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- Dynamic Brake Bias -->
+  <div class="detail-block">
+    <h3>&#128964; 動的ブレーキバイアス <span class="badge badge-red">BRAKING</span></h3>
+    <p class="desc">ステアリング入力に連動して前後ブレーキ配分をリアルタイム調整。コーナリング中の荷重移動を活かしたトレイルブレーキングを自然に実現。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> 実車のレースカーはブレーキバイアスを手動調整するが、ゲームではプレイヤーがブレーキを踏みながらステアリングを切る「トレイルブレーキング」を自然にできることが重要。ステアリング量に応じてフロント寄り65%の配分を50:50へ自動シフトし、コーナー進入時のフロントロックを防止。さらにスムージング済みではなく<b>生のステアリング入力</b>を使用し、ブレーキ配分の応答を即座に反映する。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ステアリング連動バイアス</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 直進時: フロント65% / リア35%</span><br>
+          <span style="color:var(--text2);">// フルステア時: フロント50% / リア50%</span><br><br>
+          steerRatio = |rawSteerInput|<br>
+          frontBias = Lerp(0.65, 0.50, steerRatio)<br>
+          rearBias = Lerp(0.35, 0.50, steerRatio)<br>
+          brakeTorque = brakeInput &times; maxBrake &times; bias
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">直進ブレーキングではフロント荷重が増加するためフロント寄りに。コーナリング中はリアの荷重を活かすためイーブンに移行。</p>
+      </div>
+      <div class="spec-item">
+        <h4>エンジンブレーキ＆ステアフェード</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// エンジンブレーキ = エンジントルク &times; 0.015</span><br>
+          <span style="color:var(--text2);">// 駆動輪のみに適用</span><br><br>
+          steerFade = 1 - |steerAngle/maxAngle| &times; 0.8<br>
+          engineBrake = torque &times; 0.015 &times; gearRatio<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&times; finalDrive &times; steerFade
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">コーナリング中にエンジンブレーキが効きすぎると駆動輪がロックする。ステアリング角に応じて最大80%減衰させ、コーナー中のリアの安定性を確保。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>Source: locaCarcontroller.cs &mdash; ステアリング連動ブレーキバイアス</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>// Trail braking: use raw steer INPUT (not smoothed) for instant response
+bool isFrontAxle = axle.steering;
+float rawSteerRatio = Mathf.Abs(steerInput);
+float effectiveFrontBias = isFrontAxle
+    ? Mathf.Lerp(frontBrakeBias, 0.50f, rawSteerRatio)   // 0.65 → 0.50
+    : Mathf.Lerp(1f - frontBrakeBias, 0.50f, rawSteerRatio); // 0.35 → 0.50
+float brakeTorqueForAxle = brakeInput * maxBrakeTorque * effectiveFrontBias;</code></pre>
+    </div>
+  </div>
+
+  <!-- Shift Feel -->
+  <div class="detail-block">
+    <h3>&#9881; シフトフィール <span class="badge badge-purple">SHIFT</span></h3>
+    <p class="desc">シフトアップ時のトルクカットと速度ベースのオートシフトで、変速に「重み」と「賢さ」を持たせる。</p>
+
+    <div class="callout">
+      <strong>こだわりポイント:</strong> RPMベースのオートシフトだと、タイヤが空転している時やコーナリング中に不適切なシフトアップが起きやすい。本作では各ギアの最高速度をタイヤ外径・ギア比・最大RPMから事前計算し、実車速が92%に達した時点でシフトアップする速度ベース方式を採用。さらにアップシフト時に0.12秒間のブレーキトルク（800Nm）を全輪に付与し、実車のシンクロメッシュのトルク途切れを再現。
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>アップシフト・トルクカット</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// アップシフト時のみ実行</span><br>
+          全輪 brakeTorque = 800 Nm<br>
+          yield WaitForSeconds(0.12s)<br>
+          全輪 brakeTorque = 0<br><br>
+          <span style="color:var(--text2);">// ダウンシフトはトルクカットなし</span><br>
+          <span style="color:var(--text2);">// クールダウン: 0.3秒</span>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">0.12秒の短いブレーキパルスがシフトの「ガツン」という感触を生み出す。レーシングゲームでは変速のフィードバックがドライビングリズムを作る重要な要素。</p>
+      </div>
+      <div class="spec-item">
+        <h4>速度ベース・オートシフト</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          <span style="color:var(--text2);">// 各ギアの理論最高速を事前計算</span><br>
+          maxSpeed[i] = maxRPM / gearRatio[i]<br>
+          &nbsp;&nbsp;&times; tireCircumference / finalDrive<br><br>
+          <span style="color:var(--text2);">// ↑シフト: 車速 ≥ 現ギア最高速 &times; 92%</span><br>
+          if speed &ge; maxSpeed[gear] &times; 0.92<br>
+          &nbsp;&nbsp;&amp;&amp; throttle &gt; 0.1: shiftUp()<br><br>
+          <span style="color:var(--text2);">// ↓シフト: 最適ギアまで1段ずつ</span><br>
+          bestGear = findGearForSpeed(speed)<br>
+          if bestGear &lt; current: shiftDown()
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">速度ベース方式により空転時の誤シフトを回避。ダウンシフトは一度に何段も落ちないよう1段ずつ実行。AT/MT切替はランタイムで可能（M キー / Y ボタン）。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:20px;">
+      <strong>Source: locaCarcontroller.cs &mdash; シフトトルクカット</strong>
+      <pre style="margin-top:8px; background:rgba(0,0,0,0.04); padding:12px; border-radius:6px; font-size:0.78rem; overflow-x:auto; line-height:1.5;"><code>IEnumerator ShiftGearWithBrake(int gearChange)
+{
+    lastGearShiftTime = Time.time;
+    int prev = currentGear;
+    currentGear = Mathf.Clamp(currentGear + gearChange, -1, gearRatios.Length - 1);
+    if (isAutomatic && currentGear <= 0) currentGear = 1;
+    UpdateGearText();
+
+    if (gearChange > 0)  // アップシフトのみトルクカット
+    {
+        foreach (AxleInfo axle in axleInfos)
+        {
+            if (axle.leftWheel != null) axle.leftWheel.brakeTorque = shiftBrakeTorque;
+            if (axle.rightWheel != null) axle.rightWheel.brakeTorque = shiftBrakeTorque;
+        }
+        yield return new WaitForSeconds(shiftBrakeDuration);
+        foreach (AxleInfo axle in axleInfos)
+        {
+            if (axle.leftWheel != null) axle.leftWheel.brakeTorque = 0f;
+            if (axle.rightWheel != null) axle.rightWheel.brakeTorque = 0f;
+        }
+    }
+}</code></pre>
+    </div>
   </div>
 </section>
 
