@@ -3783,7 +3783,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isFirst = currentSectionId === null;
     currentSectionId = activeId;
-    clearTimeout(zoomTimer);
 
     const switchDot = () => {
       if (colors) {
@@ -3804,11 +3803,20 @@ document.addEventListener('DOMContentLoaded', () => {
       switchDot();
       requestAnimationFrame(() => progressDots.classList.add('zoomed'));
     } else {
-      progressDots.classList.remove('zoomed');
-      zoomTimer = setTimeout(() => {
+      const wasPending = zoomTimer !== null;
+      clearTimeout(zoomTimer);
+      zoomTimer = null;
+      if (wasPending) {
+        // Already mid-animation (rapid scroll) — update immediately, then re-zoom
         switchDot();
-        zoomTimer = setTimeout(() => progressDots.classList.add('zoomed'), 700);
-      }, 450);
+        zoomTimer = setTimeout(() => { progressDots.classList.add('zoomed'); zoomTimer = null; }, 700);
+      } else {
+        progressDots.classList.remove('zoomed');
+        zoomTimer = setTimeout(() => {
+          switchDot();
+          zoomTimer = setTimeout(() => { progressDots.classList.add('zoomed'); zoomTimer = null; }, 700);
+        }, 450);
+      }
     }
   }
 
