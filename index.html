@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Velocity — Unity製レーシングゲームのテクニカルドキュメント。物理シミュレーション、AI、オーディオ、ネットワーキングの実装解説。">
+<meta property="og:title" content="Velocity - Technical Documentation">
+<meta property="og:description" content="Unity製レーシングゲームのテクニカルドキュメント。物理シミュレーション、AI、オーディオ、ネットワーキングの実装解説。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tama0618.github.io/velocity-docs/">
+<meta property="og:image" content="https://tama0618.github.io/velocity-docs/img/gameplay_chase.png">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Velocity - Technical Documentation">
+<meta name="twitter:description" content="Unity製レーシングゲームのテクニカルドキュメント。物理シミュレーション、AI、オーディオ、ネットワーキングの実装解説。">
+<meta name="twitter:image" content="https://tama0618.github.io/velocity-docs/img/gameplay_chase.png">
 <title>Velocity - Technical Documentation</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Noto+Sans+JP:wght@300;400;600;700;900&display=swap');
 
@@ -95,6 +108,98 @@
   nav a:hover { color: var(--nav-accent, var(--accent)); }
   nav a:hover::after { transform: scaleX(1); }
   nav a.nav-active::after { transform: scaleX(1); }
+
+  /* ===== HAMBURGER ===== */
+  .hamburger {
+    display: none;
+    background: none; border: none; cursor: pointer;
+    width: 32px; height: 24px;
+    position: relative; z-index: 101;
+    padding: 0;
+  }
+  .hamburger span {
+    display: block; position: absolute; left: 0;
+    width: 100%; height: 2px;
+    background: var(--text); border-radius: 2px;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+  }
+  .hamburger span:nth-child(1) { top: 2px; }
+  .hamburger span:nth-child(2) { top: 11px; }
+  .hamburger span:nth-child(3) { top: 20px; }
+  .hamburger.open span:nth-child(1) { top: 11px; transform: rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { top: 11px; transform: rotate(-45deg); }
+
+  /* ===== MOBILE MENU ===== */
+  .mobile-menu { display: none; }
+  .mobile-menu-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 98;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .mobile-menu.open .mobile-menu-backdrop {
+    opacity: 1; pointer-events: auto;
+  }
+  .mobile-menu-panel {
+    position: fixed; top: 64px; left: 0; right: 0;
+    z-index: 99;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding: 24px 0;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease;
+    pointer-events: none;
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+  .mobile-menu.open .mobile-menu-panel {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .mobile-menu-panel ul {
+    list-style: none; padding: 0; margin: 0;
+  }
+  .mobile-menu-panel li {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .mobile-menu.open .mobile-menu-panel li {
+    opacity: 1; transform: translateY(0);
+  }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(1) { transition-delay: 0.05s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(2) { transition-delay: 0.10s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(3) { transition-delay: 0.15s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(4) { transition-delay: 0.20s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(5) { transition-delay: 0.25s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(6) { transition-delay: 0.30s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(7) { transition-delay: 0.35s; }
+  .mobile-menu.open .mobile-menu-panel li:nth-child(8) { transition-delay: 0.40s; }
+  .mobile-menu-panel a {
+    display: block;
+    padding: 14px 32px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    transition: color 0.3s, border-color 0.3s, background 0.3s;
+  }
+  .mobile-menu-panel a:hover {
+    background: rgba(0,0,0,0.03);
+  }
+  .mobile-menu-panel a.mob-active {
+    color: var(--nav-accent, var(--accent));
+    border-left-color: var(--nav-accent, var(--accent));
+    background: rgba(0,0,0,0.02);
+  }
+  body.menu-open { overflow: hidden; }
 
   /* ===== HERO ===== */
   .hero {
@@ -517,6 +622,8 @@
   @media (max-width: 768px) {
     nav { padding: 0 20px; }
     nav ul { display: none; }
+    .hamburger { display: block; }
+    .mobile-menu { display: block; }
     section { padding: 60px 20px; }
     .detail-block { padding: 28px; }
     .img-showcase { grid-template-columns: 1fr; }
@@ -756,7 +863,27 @@
     <li><a href="#controls">Controls</a></li>
     <li><a href="#haptics">Haptics</a></li>
   </ul>
+  <button class="hamburger" id="hamburger" aria-label="メニュー" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-backdrop"></div>
+  <div class="mobile-menu-panel">
+    <ul>
+      <li><a href="#about" data-section="about">About</a></li>
+      <li><a href="#player" data-section="player">Player</a></li>
+      <li><a href="#ai-recording" data-section="ai-recording">AI: Recording</a></li>
+      <li><a href="#ai-autodrive" data-section="ai-autodrive">AI: AutoDrive</a></li>
+      <li><a href="#audio" data-section="audio">Audio</a></li>
+      <li><a href="#systems" data-section="systems">Systems</a></li>
+      <li><a href="#controls" data-section="controls">Controls</a></li>
+      <li><a href="#haptics" data-section="haptics">Haptics</a></li>
+    </ul>
+  </div>
+</div>
 
 <!-- PROGRESS DOTS -->
 <div id="progress-dots">
@@ -3710,6 +3837,64 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sec) sec.scrollIntoView({ behavior: 'smooth' });
       }
     });
+  });
+
+  // === MOBILE MENU ===
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileBackdrop = mobileMenu.querySelector('.mobile-menu-backdrop');
+  const mobileLinks = mobileMenu.querySelectorAll('.mobile-menu-panel a');
+
+  function syncMobileActive() {
+    const activeNav = document.querySelector('nav a.nav-active');
+    const activeHref = activeNav ? activeNav.getAttribute('href') : null;
+    mobileLinks.forEach(link => {
+      link.classList.toggle('mob-active', link.getAttribute('href') === activeHref);
+    });
+  }
+
+  function openMobileMenu() {
+    syncMobileActive();
+    hamburger.classList.add('open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    mobileMenu.classList.add('open');
+    document.body.classList.add('menu-open');
+  }
+
+  function closeMobileMenu() {
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    mobileMenu.classList.remove('open');
+    document.body.classList.remove('menu-open');
+  }
+
+  hamburger.addEventListener('click', () => {
+    mobileMenu.classList.contains('open') ? closeMobileMenu() : openMobileMenu();
+  });
+
+  mobileBackdrop.addEventListener('click', closeMobileMenu);
+
+  mobileLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeMobileMenu();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 100);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+      closeMobileMenu();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768 && mobileMenu.classList.contains('open')) {
+      closeMobileMenu();
+    }
   });
 
   // === FLOATING PARTICLES ===
