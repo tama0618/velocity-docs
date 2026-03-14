@@ -929,6 +929,7 @@
     <div class="dot-branches"><div class="branch-line"></div><div class="branch-items">
       <span data-index="0" style="--i:0">F20Cエンジン</span>
       <span data-index="1" style="--i:1">衝突サウンド</span>
+      <span data-index="2" style="--i:2">路面サウンド</span>
     </div></div>
   </a>
   <a href="#systems" data-section="systems"><span class="dot-tip">Systems</span>
@@ -2771,6 +2772,162 @@ s = Saturate(s);  // x * (27 + x²) / (27 + 9x²)</code></pre>
       </div>
     </div>
   </div>
+
+  <!-- Surface Audio: Dirt/Grass -->
+  <div class="detail-block">
+    <h3>&#127793; 路面サウンド <span class="badge badge-orange">SURFACE</span></h3>
+    <p class="desc">locaCarcontroller.cs - InitSurfaceAudio() で路面ごとのプロシージャル音声をランタイム生成。外部ファイル不要、コードだけで砂利・縁石のサウンドを合成。</p>
+
+    <h4>ダート／草地サウンド（グラベルノイズ）</h4>
+    <p>WheelColliderの接地判定で<code>dirtTag</code>（デフォルト"Dirt"）タグのコライダーを検出。車輪が草地や砂利に乗った瞬間からループ再生を開始する。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> プロシージャルグラベルクリップ生成（InitSurfaceAudio）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> sampleRate = <span class="num">44100</span>;
+<span class="kw">int</span> dirtLen = sampleRate * <span class="num">2</span>;  <span class="cm">// 2秒ループ</span>
+AudioClip dirtClip = AudioClip.Create(<span class="str">"DirtLoop"</span>, dirtLen, <span class="num">1</span>, sampleRate, <span class="kw">false</span>);
+<span class="kw">float</span>[] dirtData = <span class="kw">new float</span>[dirtLen];
+<span class="kw">float</span> lpState = <span class="num">0f</span>;
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; dirtLen; i++)
+{
+    <span class="kw">float</span> noise = Random.Range(-<span class="num">1f</span>, <span class="num">1f</span>);
+    <span class="cm">// ローパスフィルタ: カットオフ約800Hz</span>
+    <span class="kw">float</span> alpha = <span class="num">0.11f</span>;
+    lpState += alpha * (noise - lpState);
+    <span class="cm">// クランチ: 3%の確率で振幅スパイク</span>
+    <span class="kw">float</span> crunch = (Random.value > <span class="num">0.97f</span>)
+        ? Random.Range(<span class="num">0.5f</span>, <span class="num">1f</span>) : <span class="num">0f</span>;
+    dirtData[i] = Mathf.Clamp(lpState * <span class="num">3f</span> + crunch * <span class="num">0.6f</span>, -<span class="num">1f</span>, <span class="num">1f</span>);
+}
+dirtClip.SetData(dirtData, <span class="num">0</span>);</code></pre>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>ローパスフィルタ（砂利テクスチャ）</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          lpState += &alpha; &times; (noise &minus; lpState)<br><br>
+          &alpha; = 0.11 &rarr; カットオフ &asymp; 800Hz<br>
+          ゲイン &times;3 で音量を確保
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">ホワイトノイズを1次IIRローパスフィルタに通すことで、高周波のシャリシャリ感を除去し「ザクザク」した砂利感を生成。フィルタ係数&alpha;=0.11はサンプルレート44100Hzで約800Hzのカットオフに相当。</p>
+      </div>
+      <div class="spec-item">
+        <h4>クランチスパイク（小石の跳ね）</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          if Random.value > 0.97:<br>
+          &nbsp; crunch = Random(0.5, 1.0)<br>
+          else:<br>
+          &nbsp; crunch = 0
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">全サンプルの約3%にランダムな振幅スパイクを挿入。砂利の上を走行する際に小石が跳ねてボディに当たる「パチパチ」音を再現。スパイクはフィルタ後の信号に加算するため、突発的なトランジェントとして聞こえる。</p>
+      </div>
+    </div>
+
+    <h4>速度連動パラメータ</h4>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> ダートサウンド再生制御（UpdateSurfaceAudio）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">float</span> speedFade = Mathf.Clamp01(speedMS / <span class="num">25f</span>);
+
+<span class="kw">if</span> (isOnDirt && speedMS > <span class="num">0.5f</span>)
+{
+    <span class="kw">if</span> (!dirtAudioSource.isPlaying) dirtAudioSource.Play();
+    dirtAudioSource.volume = Mathf.Lerp(
+        dirtAudioSource.volume,
+        dirtAudioVolume * speedFade,
+        Time.deltaTime * <span class="num">8f</span>);
+    <span class="cm">// ピッチ: 低速0.7→高速1.4</span>
+    dirtAudioSource.pitch = Mathf.Lerp(<span class="num">0.7f</span>, <span class="num">1.4f</span>, speedFade);
+}
+<span class="kw">else</span>
+{
+    dirtAudioSource.volume = Mathf.Lerp(
+        dirtAudioSource.volume, <span class="num">0f</span>,
+        Time.deltaTime * <span class="num">12f</span>);
+    <span class="kw">if</span> (dirtAudioSource.volume &lt; <span class="num">0.01f</span>)
+        dirtAudioSource.Stop();
+}</code></pre>
+    </div>
+
+    <table class="param-table">
+      <tr><th>パラメータ</th><th>値</th><th>説明</th></tr>
+      <tr><td>speedFade</td><td>Clamp01(speed / 25)</td><td>0〜25m/s(90km/h)で0〜1に正規化</td></tr>
+      <tr><td>volume</td><td>dirtAudioVolume × speedFade</td><td>停止時は無音、高速で最大音量(0.8)</td></tr>
+      <tr><td>pitch</td><td>0.7 → 1.4</td><td>低速で低音、高速で高音（砂利が激しく飛ぶ感覚）</td></tr>
+      <tr><td>volume Lerp速度</td><td>×8（開始）/ ×12（停止）</td><td>進入時はフェードイン、退出時は素早くフェードアウト</td></tr>
+      <tr><td>最低速度閾値</td><td>0.5 m/s</td><td>ほぼ停止時は再生しない</td></tr>
+    </table>
+
+    <h4>縁石サウンド（ゼブラゾーン）</h4>
+    <p><code>zebraTag</code>タグのコライダー上で再生。等間隔のバンプ（サンク音）をプロシージャル生成。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> プロシージャル縁石バンプクリップ（InitSurfaceAudio）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> bumpsPerSecond = <span class="num">30</span>;
+<span class="kw">int</span> samplesPerBump = sampleRate / bumpsPerSecond;
+<span class="kw">int</span> bumpWidth = (<span class="kw">int</span>)(sampleRate * <span class="num">0.008f</span>); <span class="cm">// 8msのサンク音</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; zebraLen; i++)
+{
+    <span class="kw">int</span> posInBump = i % samplesPerBump;
+    <span class="kw">if</span> (posInBump &lt; bumpWidth)
+    {
+        <span class="kw">float</span> t = (<span class="kw">float</span>)posInBump / bumpWidth;
+        <span class="cm">// 二次減衰エンベロープ + 極低周波サイン</span>
+        <span class="kw">float</span> envelope = (<span class="num">1f</span> - t) * (<span class="num">1f</span> - t);
+        <span class="kw">float</span> lowThunk = Mathf.Sin(t * Mathf.PI * <span class="num">1.5f</span>);
+        <span class="kw">float</span> texture = Random.Range(-<span class="num">0.15f</span>, <span class="num">0.15f</span>);
+        zebraData[i] = envelope * (lowThunk * <span class="num">0.9f</span> + texture);
+    }
+}</code></pre>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>バンプ波形構造</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          envelope = (1 &minus; t)&sup2;<br>
+          thunk = sin(t &times; &pi; &times; 1.5)<br>
+          output = envelope &times; (thunk &times; 0.9 + noise)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">各バンプは8ms幅。二次関数エンベロープで急速に減衰する「ドン」感。低周波サイン（1.5半周期）で重い打撃音を生成。ランダムノイズ(±0.15)で質感を付与。</p>
+      </div>
+      <div class="spec-item">
+        <h4>速度連動ピッチ</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          pitch = Lerp(0.25, 0.8, speed / 35)<br><br>
+          低速: 0.25 &rarr; ゆっくりした「ドン…ドン…」<br>
+          高速: 0.8 &rarr; 速い「ドドドドド」
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">30バンプ/秒のクリップをピッチ変調で速度感を表現。ピッチ0.25で実効7.5回/秒（低速の縁石感）、0.8で24回/秒（高速のガタガタ感）。ピッチを低めに抑えることで重厚な「サンク」音質を維持。</p>
+      </div>
+    </div>
+
+    <h4>路面検出フロー</h4>
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> WheelColliderによる路面判定（UpdateHaptics）
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>WheelCollider[] wheels = { leftFront, rightFront, leftRear, rightRear };
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">4</span>; i++)
+{
+    WheelHit hit;
+    <span class="kw">if</span> (wheels[i].GetGroundHit(<span class="kw">out</span> hit) && hit.collider != <span class="kw">null</span>)
+    {
+        <span class="kw">if</span> (hit.collider.CompareTag(dirtTag))
+            isOnDirt = <span class="kw">true</span>;
+        <span class="kw">else if</span> (hit.collider.CompareTag(zebraTag))
+            isOnZebra = <span class="kw">true</span>;
+    }
+}
+<span class="fn">UpdateSurfaceAudio</span>(speedMS);</code></pre>
+    </div>
+    <p style="color:var(--text2); font-size:0.88rem;">
+      <strong>タグベース検出:</strong> 4輪それぞれの<code>WheelCollider.GetGroundHit()</code>で接地しているコライダーのタグを確認。1輪でもDirtタグに乗っていればダートサウンド発動。Collider側にタグを設定するだけで、どんな形状の路面にも対応できる。<br><br>
+      <strong>グリップへの影響:</strong> 同じDirt検出は物理演算にも連動。ダート面ではフォワードグリップ×0.3、サイドグリップ×0.38に低下し、音だけでなく挙動も変化する。
+    </p>
+  </div>
+
 </section>
 
 <!-- Full-bleed: Pitlane -->
