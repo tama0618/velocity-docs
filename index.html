@@ -2778,51 +2778,99 @@ s = Saturate(s);  // x * (27 + x²) / (27 + 9x²)</code></pre>
     <h3>&#127793; 路面サウンド <span class="badge badge-orange">SURFACE</span></h3>
     <p class="desc">locaCarcontroller.cs - InitSurfaceAudio() で路面ごとのプロシージャル音声をランタイム生成。外部ファイル不要、コードだけで砂利・縁石のサウンドを合成。</p>
 
-    <h4>ダート／草地サウンド（グラベルノイズ）</h4>
-    <p>WheelColliderの接地判定で<code>dirtTag</code>（デフォルト"Dirt"）タグのコライダーを検出。車輪が草地や砂利に乗った瞬間からループ再生を開始する。</p>
+    <h4>ダートサウンド（グラベルノイズ）</h4>
+    <p>WheelColliderの接地判定で<code>dirtTag</code>（デフォルト"Dirt"）タグのコライダーを検出。車輪がダートに乗った瞬間からループ再生を開始する。音声ファイルは使わず、44100Hzのサンプル配列を数学的に生成する完全プロシージャル方式。</p>
+
+    <h4>Step 1: 素材 &mdash; ホワイトノイズ</h4>
+    <p>すべての出発点は<code>Random.Range(-1f, 1f)</code>で生成されるホワイトノイズ。全周波数帯域が均等に含まれる「ザー」という音で、これ単体では砂利には聞こえない。ここから不要な帯域を削り、特徴を加えていく。</p>
 
     <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
-      <strong>Code:</strong> プロシージャルグラベルクリップ生成（InitSurfaceAudio）
-      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> sampleRate = <span class="num">44100</span>;
-<span class="kw">int</span> dirtLen = sampleRate * <span class="num">2</span>;  <span class="cm">// 2秒ループ</span>
-AudioClip dirtClip = AudioClip.Create(<span class="str">"DirtLoop"</span>, dirtLen, <span class="num">1</span>, sampleRate, <span class="kw">false</span>);
-<span class="kw">float</span>[] dirtData = <span class="kw">new float</span>[dirtLen];
-<span class="kw">float</span> lpState = <span class="num">0f</span>;
+      <strong>Code:</strong> AudioClip生成とサンプル配列の準備
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> sampleRate = <span class="num">44100</span>;              <span class="cm">// CD品質のサンプルレート</span>
+<span class="kw">int</span> dirtLen = sampleRate * <span class="num">2</span>;        <span class="cm">// 88200サンプル = 2秒ループ</span>
+AudioClip dirtClip = AudioClip.Create(
+    <span class="str">"DirtLoop"</span>, dirtLen, <span class="num">1</span>, sampleRate, <span class="kw">false</span>);
+<span class="kw">float</span>[] dirtData = <span class="kw">new float</span>[dirtLen]; <span class="cm">// 全サンプルの出力先</span>
+<span class="kw">float</span> lpState = <span class="num">0f</span>;                   <span class="cm">// フィルタの内部状態</span></code></pre>
+    </div>
+    <p style="color:var(--text2); font-size:0.85rem;">
+      <code>AudioClip.Create</code>で空のクリップを確保し、88,200個のfloat配列を1サンプルずつ計算で埋めていく。モノラル1ch、2秒でシームレスループ。ゲーム起動時に1回だけ生成し、以降はこのクリップを再生するだけなので実行時コストはゼロ。
+    </p>
 
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; dirtLen; i++)
-{
-    <span class="kw">float</span> noise = Random.Range(-<span class="num">1f</span>, <span class="num">1f</span>);
-    <span class="cm">// ローパスフィルタ: カットオフ約800Hz</span>
-    <span class="kw">float</span> alpha = <span class="num">0.11f</span>;
-    lpState += alpha * (noise - lpState);
-    <span class="cm">// クランチ: 3%の確率で振幅スパイク</span>
-    <span class="kw">float</span> crunch = (Random.value > <span class="num">0.97f</span>)
-        ? Random.Range(<span class="num">0.5f</span>, <span class="num">1f</span>) : <span class="num">0f</span>;
-    dirtData[i] = Mathf.Clamp(lpState * <span class="num">3f</span> + crunch * <span class="num">0.6f</span>, -<span class="num">1f</span>, <span class="num">1f</span>);
-}
-dirtClip.SetData(dirtData, <span class="num">0</span>);</code></pre>
+    <h4>Step 2: ローパスフィルタ &mdash; 砂利の質感をつくる</h4>
+    <p>ホワイトノイズをそのまま使うと「シャー」というキンキンした音になる。砂利の「ザクザク」感を出すには高周波成分を除去する必要がある。1次IIR（無限インパルス応答）ローパスフィルタで加工する。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> 1次IIRローパスフィルタ
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">float</span> noise = Random.Range(-<span class="num">1f</span>, <span class="num">1f</span>);  <span class="cm">// ホワイトノイズ1サンプル</span>
+<span class="kw">float</span> alpha = <span class="num">0.11f</span>;                      <span class="cm">// フィルタ係数</span>
+lpState += alpha * (noise - lpState);     <span class="cm">// 出力 = 前回の値に少しだけ近づける</span></code></pre>
     </div>
 
     <div class="spec-grid">
       <div class="spec-item">
-        <h4>ローパスフィルタ（砂利テクスチャ）</h4>
+        <h4>フィルタの仕組み</h4>
         <div class="formula-box" style="font-size:0.85rem; text-align:left;">
           lpState += &alpha; &times; (noise &minus; lpState)<br><br>
-          &alpha; = 0.11 &rarr; カットオフ &asymp; 800Hz<br>
-          ゲイン &times;3 で音量を確保
+          展開すると:<br>
+          lpState = (1 &minus; &alpha;) &times; lpState<sub>前回</sub> + &alpha; &times; noise
         </div>
-        <p style="color:var(--text2); font-size:0.85rem;">ホワイトノイズを1次IIRローパスフィルタに通すことで、高周波のシャリシャリ感を除去し「ザクザク」した砂利感を生成。フィルタ係数&alpha;=0.11はサンプルレート44100Hzで約800Hzのカットオフに相当。</p>
+        <p style="color:var(--text2); font-size:0.85rem;">前回の出力値と新しい入力値の加重平均。&alpha;が小さいほど前回の値を強く保持し、高周波の変動が通りにくくなる。EMA（指数移動平均）と同じ原理で、DSPでは最も基本的なローパスフィルタ。</p>
       </div>
       <div class="spec-item">
-        <h4>クランチスパイク（小石の跳ね）</h4>
+        <h4>なぜ &alpha; = 0.11 なのか</h4>
         <div class="formula-box" style="font-size:0.85rem; text-align:left;">
-          if Random.value > 0.97:<br>
-          &nbsp; crunch = Random(0.5, 1.0)<br>
-          else:<br>
-          &nbsp; crunch = 0
+          カットオフ周波数 f<sub>c</sub> &asymp; &alpha; &times; f<sub>s</sub> / (2&pi;)<br><br>
+          f<sub>c</sub> = 0.11 &times; 44100 / 6.28 &asymp; <strong>773 Hz</strong>
         </div>
-        <p style="color:var(--text2); font-size:0.85rem;">全サンプルの約3%にランダムな振幅スパイクを挿入。砂利の上を走行する際に小石が跳ねてボディに当たる「パチパチ」音を再現。スパイクはフィルタ後の信号に加算するため、突発的なトランジェントとして聞こえる。</p>
+        <p style="color:var(--text2); font-size:0.85rem;">773Hz付近で-3dB。800Hz以上の高周波はどんどん減衰し、低〜中域の「ゴロゴロ・ザクザク」だけが残る。人間の声の基本周波数帯（100〜300Hz）は十分通すので、低い砂利音が自然に聞こえる。&alpha;を0.05にすると約350Hz（もっとこもった音）、0.2にすると約1400Hz（シャリっとした音）になる。</p>
       </div>
+    </div>
+
+    <h4>Step 3: クランチスパイク &mdash; 小石の跳ねを加える</h4>
+    <p>フィルタだけだと一定の「ゴー」という音になる。実際の砂利走行では小石がタイヤに弾かれてボディやフェンダーに当たる「パチッ」「カチッ」という音が不規則に混じる。これを確率的なスパイクで再現する。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> クランチスパイク生成と最終合成
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="cm">// 3%の確率で振幅スパイク発生</span>
+<span class="kw">float</span> crunch = (Random.value > <span class="num">0.97f</span>)
+    ? Random.Range(<span class="num">0.5f</span>, <span class="num">1f</span>)    <span class="cm">// スパイク: 0.5〜1.0の強い値</span>
+    : <span class="num">0f</span>;                          <span class="cm">// 通常: 0（スパイクなし）</span>
+
+<span class="cm">// フィルタ出力(×3) + クランチ(×0.6) → クリップ</span>
+dirtData[i] = Mathf.Clamp(
+    lpState * <span class="num">3f</span> + crunch * <span class="num">0.6f</span>,
+    -<span class="num">1f</span>, <span class="num">1f</span>);</code></pre>
+    </div>
+
+    <div class="spec-grid">
+      <div class="spec-item">
+        <h4>スパイク発生確率</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          確率 = 3% (0.03/サンプル)<br><br>
+          44100 samples/sec &times; 0.03<br>
+          = 約 <strong>1323回/秒</strong> のスパイク
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">毎秒約1300回は多く聞こえるが、1サンプル=0.023msと極めて短い。人間の耳には「連続的なパチパチ感」として認識され、砂利が絶えず飛び散る感覚になる。スパイクの振幅(0.5〜1.0)もランダムなので、単調にならない。</p>
+      </div>
+      <div class="spec-item">
+        <h4>最終ミキシング</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          output = Clamp(<br>
+          &nbsp; lpState &times; 3.0 + crunch &times; 0.6,<br>
+          &nbsp; &minus;1, +1)
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">フィルタ出力は振幅が小さい（±0.1程度）ため×3で増幅。クランチは×0.6で混ぜ、フィルタ音を支配しない程度に抑える。最後にClampで±1にクリッピング。デジタルオーディオでは-1.0〜+1.0が有効範囲で、超えると歪む。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>信号処理の全体フロー:</strong>
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>ホワイトノイズ ──→ IIRローパス(800Hz) ──→ ×3増幅 ──┐
+  Random(-1,1)       lpState += α(n-lp)                  │
+                                                          ├──→ Clamp(±1) ──→ AudioClip
+  クランチスパイク ──────────────→ ×0.6 ──────┘
+  3%確率 Random(0.5,1)</code></pre>
     </div>
 
     <h4>速度連動パラメータ</h4>
@@ -2861,48 +2909,105 @@ dirtClip.SetData(dirtData, <span class="num">0</span>);</code></pre>
     </table>
 
     <h4>縁石サウンド（ゼブラゾーン）</h4>
-    <p><code>zebraTag</code>タグのコライダー上で再生。等間隔のバンプ（サンク音）をプロシージャル生成。</p>
+    <p><code>zebraTag</code>タグのコライダー上で再生。ダートとは全く異なるアプローチで、等間隔に並んだ凸凹（縁石のストライプ）を乗り越える「ドドドド」というリズミカルなバンプ音をプロシージャル生成する。</p>
+
+    <h4>Step 1: バンプの時間構造を設計する</h4>
+    <p>縁石は等間隔のストライプなので、音も等間隔のパルスとして構成する。1秒間に何回バンプが来るかを決め、各バンプの幅（持続時間）とバンプ間の無音時間を計算する。</p>
 
     <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
-      <strong>Code:</strong> プロシージャル縁石バンプクリップ（InitSurfaceAudio）
-      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> bumpsPerSecond = <span class="num">30</span>;
-<span class="kw">int</span> samplesPerBump = sampleRate / bumpsPerSecond;
-<span class="kw">int</span> bumpWidth = (<span class="kw">int</span>)(sampleRate * <span class="num">0.008f</span>); <span class="cm">// 8msのサンク音</span>
+      <strong>Code:</strong> バンプの時間設計
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> bumpsPerSecond = <span class="num">30</span>;                      <span class="cm">// 1秒あたり30バンプ</span>
+<span class="kw">int</span> samplesPerBump = sampleRate / bumpsPerSecond; <span class="cm">// = 1470サンプル/バンプ</span>
+<span class="kw">int</span> bumpWidth = (<span class="kw">int</span>)(sampleRate * <span class="num">0.008f</span>);     <span class="cm">// = 353サンプル = 8ms</span>
 
-<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; zebraLen; i++)
+<span class="cm">// 1バンプ = 8ms音 + 25ms無音 = 33ms周期</span></code></pre>
+    </div>
+
+    <table class="param-table">
+      <tr><th>パラメータ</th><th>値</th><th>意味</th></tr>
+      <tr><td>bumpsPerSecond</td><td>30</td><td>ベースのバンプレート。再生時にpitch変調で実効レートが変わる</td></tr>
+      <tr><td>samplesPerBump</td><td>1470</td><td>44100 / 30。1バンプの全サンプル数（音+無音）</td></tr>
+      <tr><td>bumpWidth</td><td>353 (8ms)</td><td>バンプ音の持続時間。残りの25msは無音（バンプ間の隙間）</td></tr>
+    </table>
+
+    <h4>Step 2: 1つのバンプ波形を合成する</h4>
+    <p>各バンプは3つの要素を掛け合わせて作る: <strong>エンベロープ</strong>（音量の時間変化）、<strong>低周波サイン波</strong>（バンプの音程）、<strong>ノイズテクスチャ</strong>（表面の粗さ）。</p>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>Code:</strong> バンプ1個の波形合成
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code><span class="kw">int</span> posInBump = i % samplesPerBump;   <span class="cm">// バンプ内の位置</span>
+<span class="kw">if</span> (posInBump &lt; bumpWidth)             <span class="cm">// 音が鳴る区間(8ms)のみ</span>
 {
-    <span class="kw">int</span> posInBump = i % samplesPerBump;
-    <span class="kw">if</span> (posInBump &lt; bumpWidth)
-    {
-        <span class="kw">float</span> t = (<span class="kw">float</span>)posInBump / bumpWidth;
-        <span class="cm">// 二次減衰エンベロープ + 極低周波サイン</span>
-        <span class="kw">float</span> envelope = (<span class="num">1f</span> - t) * (<span class="num">1f</span> - t);
-        <span class="kw">float</span> lowThunk = Mathf.Sin(t * Mathf.PI * <span class="num">1.5f</span>);
-        <span class="kw">float</span> texture = Random.Range(-<span class="num">0.15f</span>, <span class="num">0.15f</span>);
-        zebraData[i] = envelope * (lowThunk * <span class="num">0.9f</span> + texture);
-    }
+    <span class="kw">float</span> t = (<span class="kw">float</span>)posInBump / bumpWidth;  <span class="cm">// 0→1に正規化</span>
+
+    <span class="cm">// ① エンベロープ: 二次関数で急速減衰</span>
+    <span class="kw">float</span> envelope = (<span class="num">1f</span> - t) * (<span class="num">1f</span> - t);  <span class="cm">// (1-t)² → 1.0→0.0</span>
+
+    <span class="cm">// ② 音程: 極低周波サイン波（1.5半周期）</span>
+    <span class="kw">float</span> lowThunk = Mathf.Sin(t * Mathf.PI * <span class="num">1.5f</span>);
+
+    <span class="cm">// ③ テクスチャ: 微小ランダムノイズ</span>
+    <span class="kw">float</span> texture = Random.Range(-<span class="num">0.15f</span>, <span class="num">0.15f</span>);
+
+    <span class="cm">// 合成: エンベロープ × (サイン波 + ノイズ)</span>
+    zebraData[i] = envelope * (lowThunk * <span class="num">0.9f</span> + texture);
 }</code></pre>
     </div>
 
     <div class="spec-grid">
       <div class="spec-item">
-        <h4>バンプ波形構造</h4>
+        <h4>① エンベロープ (1&minus;t)&sup2;</h4>
         <div class="formula-box" style="font-size:0.85rem; text-align:left;">
-          envelope = (1 &minus; t)&sup2;<br>
-          thunk = sin(t &times; &pi; &times; 1.5)<br>
-          output = envelope &times; (thunk &times; 0.9 + noise)
+          t=0.0 &rarr; (1&minus;0)&sup2; = <strong>1.0</strong> (最大)<br>
+          t=0.25 &rarr; (0.75)&sup2; = 0.56<br>
+          t=0.5 &rarr; (0.5)&sup2; = 0.25<br>
+          t=0.75 &rarr; (0.25)&sup2; = 0.06<br>
+          t=1.0 &rarr; (0)&sup2; = <strong>0.0</strong> (無音)
         </div>
-        <p style="color:var(--text2); font-size:0.85rem;">各バンプは8ms幅。二次関数エンベロープで急速に減衰する「ドン」感。低周波サイン（1.5半周期）で重い打撃音を生成。ランダムノイズ(±0.15)で質感を付与。</p>
+        <p style="color:var(--text2); font-size:0.85rem;">二次関数による減衰は最初が急で後半が緩やか。打撃音の物理特性と一致する — 硬い物に当たった瞬間に最大振幅、その後すぐに減衰。線形減衰(1-t)よりも自然な「ドン」感が出る。</p>
+      </div>
+      <div class="spec-item">
+        <h4>② 低周波サイン sin(t&pi;&times;1.5)</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          1.5半周期 = sin(0) &rarr; sin(1.5&pi;)<br><br>
+          8ms内に0.75周期<br>
+          実効周波数 &asymp; 0.75 / 0.008 = <strong>94 Hz</strong>
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">約94Hzは低いバスドラムに近い周波数帯。タイヤが縁石のストライプを1本ずつ乗り越える重厚な「ドン」を表現。1.5を2.0にすると1周期で約125Hz（やや高い「トン」）、1.0にすると0.5周期で約63Hz（もっと重い「ドゥン」）になる。</p>
+      </div>
+      <div class="spec-item">
+        <h4>③ テクスチャノイズ</h4>
+        <div class="formula-box" style="font-size:0.85rem; text-align:left;">
+          texture = Random(&minus;0.15, +0.15)<br><br>
+          サイン波振幅(0.9)の約17%<br>
+          微小なランダム変動
+        </div>
+        <p style="color:var(--text2); font-size:0.85rem;">純粋なサイン波だけだと「電子音」に聞こえてしまう。±0.15のノイズを加えることで、縁石のコンクリート表面の微細な凹凸感が出る。エンベロープを掛けた後に加算するので、減衰中のノイズも自然に小さくなる。</p>
       </div>
       <div class="spec-item">
         <h4>速度連動ピッチ</h4>
         <div class="formula-box" style="font-size:0.85rem; text-align:left;">
           pitch = Lerp(0.25, 0.8, speed / 35)<br><br>
-          低速: 0.25 &rarr; ゆっくりした「ドン…ドン…」<br>
-          高速: 0.8 &rarr; 速い「ドドドドド」
+          ベース30バンプ/秒 &times; pitch:<br>
+          &nbsp; 低速(5km/h): 7.5回/秒 「ドン…ドン…」<br>
+          &nbsp; 中速(50km/h): 15回/秒 「ドドドド」<br>
+          &nbsp; 高速(100km/h): 24回/秒 「ドドドドドド」
         </div>
-        <p style="color:var(--text2); font-size:0.85rem;">30バンプ/秒のクリップをピッチ変調で速度感を表現。ピッチ0.25で実効7.5回/秒（低速の縁石感）、0.8で24回/秒（高速のガタガタ感）。ピッチを低めに抑えることで重厚な「サンク」音質を維持。</p>
+        <p style="color:var(--text2); font-size:0.85rem;">AudioSourceのpitchを変えるだけで再生速度が変わり、バンプ間隔が詰まる。低pitchでは間隔が空いて1つ1つが聞こえ、高pitchでは連続的な振動になる。実際の縁石走行と同じ — 速度が上がるほどストライプを速く通過する。</p>
       </div>
+    </div>
+
+    <div class="callout" style="background:rgba(0,0,0,0.04); border-left-color:var(--cyan);">
+      <strong>バンプ波形の構造図:</strong>
+      <pre style="margin:8px 0 0; font-size:0.78rem; line-height:1.5; overflow-x:auto;"><code>│← 8ms(音) →│← 25ms(無音) →│← 8ms(音) →│
+│             │               │             │
+│ ╱╲          │               │ ╱╲          │
+│╱  ╲___      │  (silence)    │╱  ╲___      │
+│       ‾‾──  │               │       ‾‾──  │
+│  envelope   │               │  envelope   │
+│  × (sin+n)  │               │  × (sin+n)  │
+└─────────────┴───────────────┴─────────────┘
+              ← 33ms (1/30秒) →</code></pre>
     </div>
 
     <h4>路面検出フロー</h4>
